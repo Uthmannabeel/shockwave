@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "shockwave"
+version = "0.1.0"
+description = "Blast-radius impact analysis on the GitLab Orbit knowledge graph"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { file = "LICENSE" }
+authors = [{ name = "Nabeel Uthman" }]
+keywords = ["gitlab", "orbit", "knowledge-graph", "impact-analysis", "code-review"]
+dependencies = [
+    "rich>=13.7",      # pretty CLI reports
+    "requests>=2.31",  # Orbit Remote REST backend
+]
+
+[project.optional-dependencies]
+fast = ["duckdb>=0.10"]   # optional direct-DB fast path
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+shockwave = "shockwave.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["shockwave*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
