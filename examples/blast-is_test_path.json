@@ -1,0 +1,138 @@
+{
+  "seed": "is_test_path",
+  "resolved": [
+    {
+      "id": 7565921523844923285,
+      "fqn": "shockwave.risk.is_test_path",
+      "file_path": "shockwave/risk.py"
+    }
+  ],
+  "summary": {
+    "affected_definitions": 11,
+    "affected_files": 4,
+    "hotspots": 3
+  },
+  "affected": [
+    {
+      "fqn": "shockwave.report.to_mermaid",
+      "name": "to_mermaid",
+      "file_path": "shockwave/report.py",
+      "definition_type": "Function",
+      "depth": 1,
+      "fan_in": 2,
+      "covered_by_test": false,
+      "score": 4.0,
+      "is_hotspot": true
+    },
+    {
+      "fqn": "shockwave.report.to_markdown",
+      "name": "to_markdown",
+      "file_path": "shockwave/report.py",
+      "definition_type": "Function",
+      "depth": 1,
+      "fan_in": 2,
+      "covered_by_test": true,
+      "score": 2.0,
+      "is_hotspot": false
+    },
+    {
+      "fqn": "shockwave.risk._covered_by_test",
+      "name": "_covered_by_test",
+      "file_path": "shockwave/risk.py",
+      "definition_type": "Function",
+      "depth": 1,
+      "fan_in": 1,
+      "covered_by_test": false,
+      "score": 2.0,
+      "is_hotspot": false
+    },
+    {
+      "fqn": "shockwave.risk.score",
+      "name": "score",
+      "file_path": "shockwave/risk.py",
+      "definition_type": "Function",
+      "depth": 2,
+      "fan_in": 2,
+      "covered_by_test": false,
+      "score": 2.0,
+      "is_hotspot": true
+    },
+    {
+      "fqn": "shockwave.report.to_dict",
+      "name": "to_dict",
+      "file_path": "shockwave/report.py",
+      "definition_type": "Function",
+      "depth": 3,
+      "fan_in": 2,
+      "covered_by_test": false,
+      "score": 1.333,
+      "is_hotspot": true
+    },
+    {
+      "fqn": "shockwave.cli._render",
+      "name": "_render",
+      "file_path": "shockwave/cli.py",
+      "definition_type": "Function",
+      "depth": 2,
+      "fan_in": 1,
+      "covered_by_test": false,
+      "score": 1.0,
+      "is_hotspot": false
+    },
+    {
+      "fqn": "shockwave.report.to_html",
+      "name": "to_html",
+      "file_path": "shockwave/report.py",
+      "definition_type": "Function",
+      "depth": 2,
+      "fan_in": 1,
+      "covered_by_test": false,
+      "score": 1.0,
+      "is_hotspot": false
+    },
+    {
+      "fqn": "shockwave.report.to_json",
+      "name": "to_json",
+      "file_path": "shockwave/report.py",
+      "definition_type": "Function",
+      "depth": 4,
+      "fan_in": 2,
+      "covered_by_test": true,
+      "score": 0.5,
+      "is_hotspot": false
+    },
+    {
+      "fqn": "shockwave.risk.RiskedNode.is_hotspot",
+      "name": "is_hotspot",
+      "file_path": "shockwave/risk.py",
+      "definition_type": "DecoratedMethod",
+      "depth": 1,
+      "fan_in": 0,
+      "covered_by_test": false,
+      "score": 0.0,
+      "is_hotspot": false
+    },
+    {
+      "fqn": "tests.test_blast_radius.test_markdown_and_json_render",
+      "name": "test_markdown_and_json_render",
+      "file_path": "tests/test_blast_radius.py",
+      "definition_type": "Function",
+      "depth": 2,
+      "fan_in": 0,
+      "covered_by_test": true,
+      "score": 0.0,
+      "is_hotspot": false
+    },
+    {
+      "fqn": "shockwave.cli.main",
+      "name": "main",
+      "file_path": "shockwave/cli.py",
+      "definition_type": "Function",
+      "depth": 3,
+      "fan_in": 0,
+      "covered_by_test": false,
+      "score": 0.0,
+      "is_hotspot": false
+    }
+  ]
+}

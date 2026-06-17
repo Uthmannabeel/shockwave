@@ -22,6 +22,7 @@ env/
 reports/
 *.html
 !docs/**/*.html
+!examples/**/*.html  # keep committed demo artifacts
 
 # Editor / OS
 .vscode/
