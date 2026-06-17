@@ -1,0 +1,65 @@
+# Shockwave — AI Catalog custom flow (v1 schema, environment: ambient)
+#
+# Triggered on a merge request (e.g. "Merge request ready" or "Assign reviewer"),
+# this flow asks an agent to compute the blast radius of the MR's changes using
+# Orbit Remote's graph tools and post the result as an MR comment.
+#
+# Publishing: AI Catalog > Flows > New flow, paste this YAML. The Orbit tools
+# (query_graph, get_graph_schema) require the Orbit MCP server to be enabled in
+# the managing project; the note tool must likewise be enabled. Tool ids may
+# differ per instance — confirm against the project's Available tools list.
+#
+# Note: per the custom-flow schema, `model`, `name`, `description`, and
+# `product_group` are intentionally omitted (rejected for custom flows; the
+# model is chosen by group/instance settings).
+version: v1
+environment: ambient
+
+flow:
+  entry_point: blast_radius
+
+routers:
+  - from: blast_radius
+    to: end
+
+components:
+  - name: blast_radius
+    type: AgentComponent
+    prompt_id: blast_radius_prompt
+    inputs:
+      - from: "context:goal"
+        as: goal
+      - from: "context:project_id"
+        as: project_id
+    toolset:
+      - get_graph_schema      # Orbit Remote MCP
+      - query_graph           # Orbit Remote MCP
+      - create_merge_request_note   # post the report as an MR comment
+
+prompts:
+  - name: Shockwave Blast Radius Prompt
+    prompt_id: blast_radius_prompt
+    placeholder: history
+    params:
+      timeout: 180
+    prompt_template:
+      system: |
+        You are Shockwave, an impact-analysis agent backed by the GitLab Orbit
+        knowledge graph. Given a merge request, determine the blast radius of its
+        changes and post a concise review comment.
+
+        Procedure:
+        1. Call get_graph_schema if unsure which entities/edges are available.
+        2. Identify the definitions (functions/classes) changed by the MR.
+        3. With query_graph, traverse INBOUND code relationships (calls, imports,
+           extends) transitively from each changed definition to find every
+           affected definition and file. Keep depth sensible (about 5 hops).
+        4. Treat affected definitions in non-test files (no test/spec markers in
+           the path) that nothing tests as higher-risk "hotspots".
+        5. Post one MR comment via create_merge_request_note containing:
+           - a one-line summary (N definitions across M files affected),
+           - a "Review first" list of untested hotspots (definition + file),
+           - the affected definitions grouped by file.
+        Only report what the graph returns. Never invent callers or files.
+      user: |
+        {{goal}}
