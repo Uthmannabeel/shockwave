@@ -32,6 +32,29 @@ Orbit Local indexes a repo into a DuckDB graph (`~/.orbit/graph.duckdb`); Shockw
 
 See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
+## See it in action
+
+Run against **Flask** (`pallets/flask`, ~1,650 definitions), asking what depends
+on `setupmethod` — a one-line internal decorator:
+
+```text
+$ shockwave analyze setupmethod --max-hops 4
+
+# ⚡ Blast radius: `src.flask.sansio.scaffold.setupmethod`
+
+**114** definitions across **10** files depend on this change.
+ 🔥 **7** high-impact **untested** hotspot(s) need review.
+
+## 🔥 Untested hotspots (review first)
+| Definition                                   | File                           | Depth | Fan-in | Risk |
+| -------------------------------------------- | ------------------------------ | ----: | -----: | ---: |
+| `Blueprint.record_once`                      | src/flask/sansio/blueprints.py |     1 |     10 | 20.0 |
+| `Scaffold._method_route`                     | src/flask/sansio/scaffold.py   |     2 |      5 |  5.0 |
+| `App.add_template_filter`                    | src/flask/sansio/app.py        |     1 |      2 |  4.0 |
+```
+
+Full reports (Markdown / HTML / JSON) are in [`examples/flask/`](examples/flask).
+
 ## Quick start
 
 ```bash

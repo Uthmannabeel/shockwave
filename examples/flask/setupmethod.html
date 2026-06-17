@@ -1,0 +1,421 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Shockwave — src.flask.sansio.scaffold.setupmethod</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({startOnLoad:true});</script>
+<style>
+ body{font-family:system-ui,sans-serif;margin:2rem;background:#0d1117;color:#e6edf3}
+ h1{color:#ff5252} code{color:#ffd180}
+ table{border-collapse:collapse;width:100%;margin-top:1rem}
+ td,th{border:1px solid #30363d;padding:.4rem .6rem;text-align:left}
+ tr.hot{background:#3a1d00} .summary{font-size:1.1rem}
+ .mermaid{background:#161b22;border-radius:8px;padding:1rem;margin:1rem 0}
+</style></head><body>
+<h1>⚡ Blast radius: <code>src.flask.sansio.scaffold.setupmethod</code></h1>
+<p class="summary">114 definitions ·
+ 10 files ·
+ 🔥 7 untested hotspots</p>
+<div class="mermaid">graph RL
+  n1392328723225072729["setupmethod"]:::seed
+  n2942236513105448583["add_template_filter"]:::hot
+  n8887020358345648870["add_template_global"]:::hot
+  n5565619807448951273["add_template_test"]:::hot
+  n3060443408223607637["add_url_rule"]:::hot
+  n1731998503950155603["register_blueprint"]:::hot
+  n6555802345172233768["shell_context_processor"]:::hot
+  n5170958932114731826["teardown_appcontext"]:::hot
+  n8942737070383570457["template_filter"]:::hot
+  n75649507545980510["template_global"]:::hot
+  n101680970824449709["template_test"]:::hot
+  n6331648994029969243["add_app_template_filter"]:::hot
+  n3598520985468557351["add_app_template_global"]:::hot
+  n3921310695500118772["add_app_template_test"]:::hot
+  n4775188976336131904["add_url_rule"]:::hot
+  n4801937160751784881["after_app_request"]:::hot
+  n7124459596045609588["app_context_processor"]:::hot
+  n8363229861878288606["app_errorhandler"]:::hot
+  n8665266310946363575["app_template_filter"]:::hot
+  n3378830746444724463["app_template_global"]:::hot
+  n3593543712907893848["app_template_test"]:::hot
+  n6709708625012512267["app_url_defaults"]:::hot
+  n150834622776157036["app_url_value_preprocessor"]:::hot
+  n4775669101644749468["before_app_request"]:::hot
+  n6915211898249349238["record"]:::hot
+  n4587538323171241714["record_once"]:::hot
+  n3537642430857936962["register_blueprint"]:::hot
+  n4636820050080416399["teardown_app_request"]:::hot
+  n6638410555608036834["add_url_rule"]:::hot
+  n6502165877460933391["after_request"]:::hot
+  n4456285749814917583["before_request"]:::hot
+  n6507716515324539237["context_processor"]:::hot
+  n6903037553395326772["delete"]:::hot
+  n4953335023016034612["endpoint"]:::hot
+  n3399192016736282135["errorhandler"]:::hot
+  n6066169253476501611["get"]:::hot
+  n7850897457476938212["patch"]:::hot
+  n2576008190699023428["post"]:::hot
+  n5334020549290229290["put"]:::hot
+  n2501908511852032480["register_error_handler"]:::hot
+  n3053300568581200410["route"]:::hot
+  n6797800704092882873["teardown_request"]:::hot
+  n7578198148713739426["url_defaults"]:::hot
+  n7319806126251181764["url_value_preprocessor"]:::hot
+  n7644773251429103688["__init__"]:::hot
+  n7070288191018925396["decorator"]:::hot
+  n7998964553914564689["decorator"]:::hot
+  n5639163327399523794["decorator"]:::hot
+  n9008930898105946933["decorator"]:::hot
+  n3571395775597985520["decorator"]:::hot
+  n4413759466263040461["decorator"]:::hot
+  n5386093266702549062["decorator"]:::hot
+  n7545528334413314244["add_url_rule"]:::hot
+  n1291069345738763396["_method_route"]:::hot
+  n7063396054972603523["decorator"]:::hot
+  n5836271934432450223["decorator"]:::hot
+  n2369677356579878072["test_inject_blueprint_url_defaults"]:::test
+  n5010246845410238351["test_response_type_errors"]:::test
+  n1301940787975315849["test_server_name_matching"]:::test
+  n3762094673873161414["test_server_name_subdomain"]:::test
+  n8795295478749612918["test_static_folder_with_ending_slash"]:::test
+  n8427181305443711852["test_subdomain_basic_support"]:::test
+  n8511416176041816696["test_subdomain_matching"]:::test
+  n2666525472332940369["test_subdomain_matching_other_name"]:::test
+  n8772884645079624118["test_subdomain_matching_with_ports"]:::test
+  n2684379656439026630["test_add_template_filter"]:::test
+  n1169928346654915799["test_add_template_filter_with_name"]:::test
+  n3535708130300105271["test_add_template_filter_with_name_and_template"]:::test
+  n765107455241342547["test_add_template_filter_with_template"]:::test
+  n4694282654638271615["test_add_template_test"]:::test
+  n2790816482029444819["test_add_template_test_with_name"]:::test
+  n4889725150233660075["test_add_template_test_with_name_and_template"]:::test
+  n7155003988792803669["test_add_template_test_with_template"]:::test
+  n277763545032535118["test_app_request_processing"]:::test
+  n8866664548832587508["test_app_url_processors"]:::test
+  n7509362797056068663["test_blueprint_app_error_handling"]:::test
+  n8757546313021289571["test_blueprint_prefix_slash"]:::test
+  n7013089823275452804["test_blueprint_renaming"]:::test
+  n815087988724497033["test_blueprint_specific_error_handling"]:::test
+  n8954815528801991992["test_blueprint_specific_user_error_handling"]:::test
+  n7726532136535345368["test_blueprint_url_defaults"]:::test
+  n1481021619337480436["test_blueprint_url_processors"]:::test
+  n516250836529587899["test_child_and_parent_subdomain"]:::test
+  n16783728698040204["test_context_processing"]:::test
+  n5524294716684172424["test_dotted_names_from_app"]:::test
+  n7532034878482907364["test_empty_url_defaults"]:::test
+  n7785284258331996635["test_endpoint_decorator"]:::test
+  n3031197815272954413["test_nested_blueprint"]:::test
+  n4105761426095972233["test_nested_callback_order"]:::test
+  n6655648345406661732["test_nesting_subdomains"]:::test
+  n6016633709702040306["test_nesting_url_prefixes"]:::test
+  n2216077455849021385["test_request_processing"]:::test
+  n3906715862205588373["test_route_decorator_custom_endpoint"]:::test
+  n5003733773742791766["test_route_decorator_custom_endpoint_with_dots"]:::test
+  n5768345310113506212["test_self_registration"]:::test
+  n8400729978470462138["test_template_filter"]:::test
+  n1211928011617268267["test_template_filter_after_route_with_template"]:::test
+  n8623056754647741993["test_template_filter_with_name"]:::test
+  n7518877538776319109["test_template_filter_with_name_and_template"]:::test
+  n1165648341601494539["test_template_filter_with_template"]:::test
+  n6709658668262264580["test_template_global"]:::test
+  n3295132049932180669["test_template_test"]:::test
+  n477547637355083230["test_template_test_after_route_with_template"]:::test
+  n1785300115649434625["test_template_test_with_name"]:::test
+  n7863871532826283998["test_template_test_with_name_and_template"]:::test
+  n1723332180664968858["test_template_test_with_template"]:::test
+  n4713648982779975364["test_open_session_with_endpoint"]:::test
+  n3138200474281039712["test_before_render_template"]:::test
+  n1340227251203859034["test_request_exception_signal"]:::test
+  n8230645783764814157["test_request_signals"]:::test
+  n7598031490203204053["test_blueprint_with_subdomain"]:::test
+  n6381810045122042845["test_subdomain"]:::test
+  n9050128530462099961["test_default_error_handler"]:::test
+  n1141995492671523258["test_error_handler_blueprint"]:::test
+  n4093068940202638242["register"]:::hot
+  n7644773251429103688 --> n3060443408223607637
+  n2942236513105448583 --> n1392328723225072729
+  n6709708625012512267 --> n1392328723225072729
+  n4636820050080416399 --> n1392328723225072729
+  n6502165877460933391 --> n1392328723225072729
+  n3399192016736282135 --> n1392328723225072729
+  n3053300568581200410 --> n1392328723225072729
+  n8942737070383570457 --> n1392328723225072729
+  n4775669101644749468 --> n1392328723225072729
+  n7578198148713739426 --> n1392328723225072729
+  n3598520985468557351 --> n1392328723225072729
+  n6555802345172233768 --> n1392328723225072729
+  n5334020549290229290 --> n1392328723225072729
+  n101680970824449709 --> n1392328723225072729
+  n4801937160751784881 --> n1392328723225072729
+  n5170958932114731826 --> n1392328723225072729
+  n6903037553395326772 --> n1392328723225072729
+  n4953335023016034612 --> n1392328723225072729
+  n8665266310946363575 --> n1392328723225072729
+  n6797800704092882873 --> n1392328723225072729
+  n4775188976336131904 --> n1392328723225072729
+  n3537642430857936962 --> n1392328723225072729
+  n2576008190699023428 --> n1392328723225072729
+  n7319806126251181764 --> n1392328723225072729
+  n4456285749814917583 --> n1392328723225072729
+  n1731998503950155603 --> n1392328723225072729
+  n3060443408223607637 --> n1392328723225072729
+  n3593543712907893848 --> n1392328723225072729
+  n6331648994029969243 --> n1392328723225072729
+  n75649507545980510 --> n1392328723225072729
+  n8363229861878288606 --> n1392328723225072729
+  n2501908511852032480 --> n1392328723225072729
+  n6638410555608036834 --> n1392328723225072729
+  n7850897457476938212 --> n1392328723225072729
+  n6507716515324539237 --> n1392328723225072729
+  n8887020358345648870 --> n1392328723225072729
+  n5565619807448951273 --> n1392328723225072729
+  n150834622776157036 --> n1392328723225072729
+  n6066169253476501611 --> n1392328723225072729
+  n3378830746444724463 --> n1392328723225072729
+  n4587538323171241714 --> n1392328723225072729
+  n3921310695500118772 --> n1392328723225072729
+  n7124459596045609588 --> n1392328723225072729
+  n6915211898249349238 --> n1392328723225072729
+  n1731998503950155603 --> n4093068940202638242
+  n8942737070383570457 --> n2942236513105448583
+  n7070288191018925396 --> n2942236513105448583
+  n5639163327399523794 --> n5565619807448951273
+  n101680970824449709 --> n5565619807448951273
+  n7998964553914564689 --> n8887020358345648870
+  n75649507545980510 --> n8887020358345648870
+  n5003733773742791766 --> n4775188976336131904
+  n7545528334413314244 --> n4775188976336131904
+  n4775188976336131904 --> n6915211898249349238
+  n4587538323171241714 --> n6915211898249349238
+  n4093068940202638242 --> n7545528334413314244
+  n2684379656439026630 --> n6331648994029969243
+  n3571395775597985520 --> n6331648994029969243
+  n765107455241342547 --> n6331648994029969243
+  n1169928346654915799 --> n6331648994029969243
+  n3535708130300105271 --> n6331648994029969243
+  n8665266310946363575 --> n6331648994029969243
+  n3598520985468557351 --> n4587538323171241714
+  n150834622776157036 --> n4587538323171241714
+  n6709708625012512267 --> n4587538323171241714
+  n4636820050080416399 --> n4587538323171241714
+  n4801937160751784881 --> n4587538323171241714
+  n3921310695500118772 --> n4587538323171241714
+  n7124459596045609588 --> n4587538323171241714
+  n9008930898105946933 --> n4587538323171241714
+  n6331648994029969243 --> n4587538323171241714
+  n4775669101644749468 --> n4587538323171241714
+  n4694282654638271615 --> n3921310695500118772
+  n5386093266702549062 --> n3921310695500118772
+  n4889725150233660075 --> n3921310695500118772
+  n2790816482029444819 --> n3921310695500118772
+  n7155003988792803669 --> n3921310695500118772
+  n3593543712907893848 --> n3921310695500118772
+  n3378830746444724463 --> n3598520985468557351
+  n4413759466263040461 --> n3598520985468557351
+  n1291069345738763396 --> n3053300568581200410
+  n1301940787975315849 --> n3053300568581200410
+  n815087988724497033 --> n3053300568581200410
+  n5524294716684172424 --> n3053300568581200410
+  n16783728698040204 --> n3053300568581200410
+  n4105761426095972233 --> n3053300568581200410
+  n5010246845410238351 --> n3053300568581200410
+  n3906715862205588373 --> n3053300568581200410
+  n3031197815272954413 --> n3053300568581200410
+  n2369677356579878072 --> n3053300568581200410
+  n8772884645079624118 --> n3053300568581200410
+  n8954815528801991992 --> n3053300568581200410
+  n7509362797056068663 --> n3053300568581200410
+  n516250836529587899 --> n3053300568581200410
+  n1141995492671523258 --> n3053300568581200410
+  n3762094673873161414 --> n3053300568581200410
+  n2216077455849021385 --> n3053300568581200410
+  n8230645783764814157 --> n3053300568581200410
+  n2666525472332940369 --> n3053300568581200410
+  n5003733773742791766 --> n3053300568581200410
+  n7598031490203204053 --> n3053300568581200410
+  n1340227251203859034 --> n3053300568581200410
+  n7726532136535345368 --> n3053300568581200410
+  n6381810045122042845 --> n3053300568581200410
+  n3138200474281039712 --> n3053300568581200410
+  n8757546313021289571 --> n3053300568581200410
+  n7532034878482907364 --> n3053300568581200410
+  n6655648345406661732 --> n3053300568581200410
+  n8427181305443711852 --> n3053300568581200410
+  n1481021619337480436 --> n3053300568581200410
+  n6016633709702040306 --> n3053300568581200410
+  n8795295478749612918 --> n3053300568581200410
+  n8511416176041816696 --> n3053300568581200410
+  n9050128530462099961 --> n3053300568581200410
+  n2576008190699023428 --> n1291069345738763396
+  n7850897457476938212 --> n1291069345738763396
+  n5334020549290229290 --> n1291069345738763396
+  n6066169253476501611 --> n1291069345738763396
+  n6903037553395326772 --> n1291069345738763396
+  n5836271934432450223 --> n6638410555608036834
+  n8954815528801991992 --> n2501908511852032480
+  n7063396054972603523 --> n2501908511852032480
+  n2369677356579878072 --> n7578198148713739426
+  n1481021619337480436 --> n7578198148713739426
+  n7013089823275452804 --> n3399192016736282135
+  n815087988724497033 --> n3399192016736282135
+  n3031197815272954413 --> n3399192016736282135
+  n1141995492671523258 --> n3399192016736282135
+  n8954815528801991992 --> n3399192016736282135
+  n9050128530462099961 --> n3399192016736282135
+  n7509362797056068663 --> n8363229861878288606
+  n1481021619337480436 --> n7319806126251181764
+  n7785284258331996635 --> n4953335023016034612
+  n7518877538776319109 --> n8665266310946363575
+  n1211928011617268267 --> n8665266310946363575
+  n1165648341601494539 --> n8665266310946363575
+  n8623056754647741993 --> n8665266310946363575
+  n8400729978470462138 --> n8665266310946363575
+  n1785300115649434625 --> n3593543712907893848
+  n7863871532826283998 --> n3593543712907893848
+  n1723332180664968858 --> n3593543712907893848
+  n3295132049932180669 --> n3593543712907893848
+  n477547637355083230 --> n3593543712907893848
+  n16783728698040204 --> n7124459596045609588
+  n4105761426095972233 --> n6507716515324539237
+  n16783728698040204 --> n6507716515324539237
+  n6709658668262264580 --> n3378830746444724463
+  n8230645783764814157 --> n4456285749814917583
+  n2216077455849021385 --> n4456285749814917583
+  n4105761426095972233 --> n4456285749814917583
+  n8230645783764814157 --> n6502165877460933391
+  n2216077455849021385 --> n6502165877460933391
+  n2216077455849021385 --> n6797800704092882873
+  n4105761426095972233 --> n6797800704092882873
+  n277763545032535118 --> n4775669101644749468
+  n277763545032535118 --> n4801937160751784881
+  n277763545032535118 --> n4636820050080416399
+  n8866664548832587508 --> n6709708625012512267
+  n8866664548832587508 --> n150834622776157036
+  n6655648345406661732 --> n3537642430857936962
+  n5768345310113506212 --> n3537642430857936962
+  n7013089823275452804 --> n3537642430857936962
+  n4105761426095972233 --> n3537642430857936962
+  n3031197815272954413 --> n3537642430857936962
+  n6016633709702040306 --> n3537642430857936962
+  n516250836529587899 --> n3537642430857936962
+  n4713648982779975364 --> n6066169253476501611
+  n7013089823275452804 --> n6066169253476501611
+  n7598031490203204053 --> n1731998503950155603
+  n9050128530462099961 --> n1731998503950155603
+  classDef seed fill:#ff5252,stroke:#b71c1c,color:#fff;
+  classDef hot fill:#ffd180,stroke:#e65100;
+  classDef test fill:#b9f6ca,stroke:#1b5e20;</div>
+<table><thead><tr><th>Definition</th><th>File</th><th>Depth</th><th>Fan-in</th><th>Tested</th></tr></thead>
+<tbody><tr class=''><td><code>src.flask.sansio.scaffold.Scaffold.route</code></td><td><code>src/flask/sansio/scaffold.py</code></td><td>1</td><td>34</td><td>✅</td></tr>
+<tr class='hot'><td><code>src.flask.sansio.blueprints.Blueprint.record_once</code></td><td><code>src/flask/sansio/blueprints.py</code></td><td>1</td><td>10</td><td>—</td></tr>
+<tr class=''><td><code>src.flask.sansio.blueprints.Blueprint.register_blueprint</code></td><td><code>src/flask/sansio/blueprints.py</code></td><td>1</td><td>7</td><td>✅</td></tr>
+<tr class=''><td><code>src.flask.sansio.blueprints.Blueprint.add_app_template_filter</code></td><td><code>src/flask/sansio/blueprints.py</code></td><td>1</td><td>6</td><td>✅</td></tr>
+<tr class=''><td><code>src.flask.sansio.blueprints.Blueprint.add_app_template_test</code></td><td><code>src/flask/sansio/blueprints.py</code></td><td>1</td><td>6</td><td>✅</td></tr>
+<tr class=''><td><code>src.flask.sansio.scaffold.Scaffold.errorhandler</code></td><td><code>src/flask/sansio/scaffold.py</code></td><td>1</td><td>6</td><td>✅</td></tr>
+<tr class=''><td><code>src.flask.sansio.blueprints.Blueprint.app_template_filter</code></td><td><code>src/flask/sansio/blueprints.py</code></td><td>1</td><td>5</td><td>✅</td></tr>
+<tr class=''><td><code>src.flask.sansio.blueprints.Blueprint.app_template_test</code></td><td><code>src/flask/sansio/blueprints.py</code></td><td>1</td><td>5</td><td>✅</td></tr>
+<tr class='hot'><td><code>src.flask.sansio.scaffold.Scaffold._method_route</code></td><td><code>src/flask/sansio/scaffold.py</code></td><td>2</td><td>5</td><td>—</td></tr>
+<tr class='hot'><td><code>src.flask.sansio.app.App.add_template_filter</code></td><td><code>src/flask/sansio/app.py</code></td><td>1</td><td>2</td><td>—</td></tr>
+<tr class='hot'><td><code>src.flask.sansio.app.App.add_template_global</code></td><td><code>src/flask/sansio/app.py</code></td><td>1</td><td>2</td><td>—</td></tr>
+<tr class='hot'><td><code>src.flask.sansio.app.App.add_template_test</code></td><td><code>src/flask/sansio/app.py</code></td><td>1</td><td>2</td><td>—</td></tr>
+<tr class='hot'><td><code>src.flask.sansio.blueprints.Blueprint.add_app_template_global</code></td><td><code>src/flask/sansio/blueprints.py</code></td><td>1</td><td>2</td><td>—</td></tr>
+<tr class='hot'><td><code>src.flask.sansio.blueprints.Blueprint.record</code></td><td><code>src/flask/sansio/blueprints.py</code></td><td>1</td><td>2</td><td>—</td></tr>
+<tr class=''><td><code>src.flask.sansio.scaffold.Scaffold.before_request</code></td><td><code>src/flask/sansio/scaffold.py</code></td><td>1</td><td>3</td><td>✅</td></tr>
+<tr class=''><td><code>src.flask.sansio.app.App.add_url_rule</code></td><td><code>src/flask/sansio/app.py</code></td><td>1</td><td>1</td><td>—</td></tr>
+<tr class=''><td><code>src.flask.sansio.app.App.register_blueprint</code></td><td><code>src/flask/sansio/app.py</code></td><td>1</td><td>2</td><td>✅</td></tr>
+<tr class=''><td><code>src.flask.sansio.blueprints.Blueprint.add_url_rule</code></td><td><code>src/flask/sansio/blueprints.py</code></td><td>1</td><td>2</td><td>✅</td></tr>
+<tr class=''><td><code>src.flask.sansio.scaffold.Scaffold.add_url_rule</code></td><td><code>src/flask/sansio/scaffold.py</code></td><td>1</td><td>1</td><td>—</td></tr>
+<tr class=''><td><code>src.flask.sansio.scaffold.Scaffold.after_request</code></td><td><code>src/flask/sansio/scaffold.py</code></td><td>1</td><td>2</td><td>✅</td></tr>
+<tr class=''><td><code>src.flask.sansio.scaffold.Scaffold.context_processor</code></td><td><code>src/flask/sansio/scaffold.py</code></td><td>1</td><td>2</td><td>✅</td></tr>
+<tr class=''><td><code>src.flask.sansio.scaffold.Scaffold.get</code></td><td><code>src/flask/sansio/scaffold.py</code></td><td>1</td><td>2</td><td>✅</td></tr>
+<tr class=''><td><code>src.flask.sansio.scaffold.Scaffold.register_error_handler</code></td><td><code>src/flask/sansio/scaffold.py</code></td><td>1</td><td>2</td><td>✅</td></tr>
+<tr class=''><td><code>src.flask.sansio.scaffold.Scaffold.teardown_request</code></td><td><code>src/flask/sansio/scaffold.py</code></td><td>1</td><td>2</td><td>✅</td></tr>
+<tr class=''><td><code>src.flask.sansio.scaffold.Scaffold.url_defaults</code></td><td><code>src/flask/sansio/scaffold.py</code></td><td>1</td><td>2</td><td>✅</td></tr>
+<tr class=''><td><code>src.flask.sansio.blueprints.Blueprint.after_app_request</code></td><td><code>src/flask/sansio/blueprints.py</code></td><td>1</td><td>1</td><td>✅</td></tr>
+<tr class=''><td><code>src.flask.sansio.blueprints.Blueprint.app_context_processor</code></td><td><code>src/flask/sansio/blueprints.py</code></td><td>1</td><td>1</td><td>✅</td></tr>
+<tr class=''><td><code>src.flask.sansio.blueprints.Blueprint.app_errorhandler</code></td><td><code>src/flask/sansio/blueprints.py</code></td><td>1</td><td>1</td><td>✅</td></tr>
+<tr class=''><td><code>src.flask.sansio.blueprints.Blueprint.app_template_global</code></td><td><code>src/flask/sansio/blueprints.py</code></td><td>1</td><td>1</td><td>✅</td></tr>
+<tr class=''><td><code>src.flask.sansio.blueprints.Blueprint.app_url_defaults</code></td><td><code>src/flask/sansio/blueprints.py</code></td><td>1</td><td>1</td><td>✅</td></tr>
+<tr class=''><td><code>src.flask.sansio.blueprints.Blueprint.app_url_value_preprocessor</code></td><td><code>src/flask/sansio/blueprints.py</code></td><td>1</td><td>1</td><td>✅</td></tr>
+<tr class=''><td><code>src.flask.sansio.blueprints.Blueprint.before_app_request</code></td><td><code>src/flask/sansio/blueprints.py</code></td><td>1</td><td>1</td><td>✅</td></tr>
+<tr class=''><td><code>src.flask.sansio.blueprints.Blueprint.teardown_app_request</code></td><td><code>src/flask/sansio/blueprints.py</code></td><td>1</td><td>1</td><td>✅</td></tr>
+<tr class=''><td><code>src.flask.sansio.scaffold.Scaffold.endpoint</code></td><td><code>src/flask/sansio/scaffold.py</code></td><td>1</td><td>1</td><td>✅</td></tr>
+<tr class=''><td><code>src.flask.sansio.scaffold.Scaffold.url_value_preprocessor</code></td><td><code>src/flask/sansio/scaffold.py</code></td><td>1</td><td>1</td><td>✅</td></tr>
+<tr class=''><td><code>src.flask.sansio.blueprints.BlueprintSetupState.add_url_rule</code></td><td><code>src/flask/sansio/blueprints.py</code></td><td>2</td><td>1</td><td>—</td></tr>
+<tr class=''><td><code>src.flask.sansio.blueprints.Blueprint.register</code></td><td><code>src/flask/sansio/blueprints.py</code></td><td>3</td><td>1</td><td>—</td></tr>
+<tr class=''><td><code>src.flask.sansio.app.App.shell_context_processor</code></td><td><code>src/flask/sansio/app.py</code></td><td>1</td><td>0</td><td>—</td></tr>
+<tr class=''><td><code>src.flask.sansio.app.App.teardown_appcontext</code></td><td><code>src/flask/sansio/app.py</code></td><td>1</td><td>0</td><td>—</td></tr>
+<tr class=''><td><code>src.flask.sansio.app.App.template_filter</code></td><td><code>src/flask/sansio/app.py</code></td><td>1</td><td>0</td><td>—</td></tr>
+<tr class=''><td><code>src.flask.sansio.app.App.template_global</code></td><td><code>src/flask/sansio/app.py</code></td><td>1</td><td>0</td><td>—</td></tr>
+<tr class=''><td><code>src.flask.sansio.app.App.template_test</code></td><td><code>src/flask/sansio/app.py</code></td><td>1</td><td>0</td><td>—</td></tr>
+<tr class=''><td><code>src.flask.sansio.scaffold.Scaffold.delete</code></td><td><code>src/flask/sansio/scaffold.py</code></td><td>1</td><td>0</td><td>—</td></tr>
+<tr class=''><td><code>src.flask.sansio.scaffold.Scaffold.patch</code></td><td><code>src/flask/sansio/scaffold.py</code></td><td>1</td><td>0</td><td>—</td></tr>
+<tr class=''><td><code>src.flask.sansio.scaffold.Scaffold.post</code></td><td><code>src/flask/sansio/scaffold.py</code></td><td>1</td><td>0</td><td>—</td></tr>
+<tr class=''><td><code>src.flask.sansio.scaffold.Scaffold.put</code></td><td><code>src/flask/sansio/scaffold.py</code></td><td>1</td><td>0</td><td>—</td></tr>
+<tr class=''><td><code>src.flask.app.Flask.__init__</code></td><td><code>src/flask/app.py</code></td><td>2</td><td>0</td><td>—</td></tr>
+<tr class=''><td><code>src.flask.sansio.app.App.template_filter.decorator</code></td><td><code>src/flask/sansio/app.py</code></td><td>2</td><td>0</td><td>—</td></tr>
+<tr class=''><td><code>src.flask.sansio.app.App.template_global.decorator</code></td><td><code>src/flask/sansio/app.py</code></td><td>2</td><td>0</td><td>—</td></tr>
+<tr class=''><td><code>src.flask.sansio.app.App.template_test.decorator</code></td><td><code>src/flask/sansio/app.py</code></td><td>2</td><td>0</td><td>—</td></tr>
+<tr class=''><td><code>src.flask.sansio.blueprints.Blueprint.app_errorhandler.decorator</code></td><td><code>src/flask/sansio/blueprints.py</code></td><td>2</td><td>0</td><td>—</td></tr>
+<tr class=''><td><code>src.flask.sansio.blueprints.Blueprint.app_template_filter.decorator</code></td><td><code>src/flask/sansio/blueprints.py</code></td><td>2</td><td>0</td><td>—</td></tr>
+<tr class=''><td><code>src.flask.sansio.blueprints.Blueprint.app_template_global.decorator</code></td><td><code>src/flask/sansio/blueprints.py</code></td><td>2</td><td>0</td><td>—</td></tr>
+<tr class=''><td><code>src.flask.sansio.blueprints.Blueprint.app_template_test.decorator</code></td><td><code>src/flask/sansio/blueprints.py</code></td><td>2</td><td>0</td><td>—</td></tr>
+<tr class=''><td><code>src.flask.sansio.scaffold.Scaffold.errorhandler.decorator</code></td><td><code>src/flask/sansio/scaffold.py</code></td><td>2</td><td>0</td><td>—</td></tr>
+<tr class=''><td><code>src.flask.sansio.scaffold.Scaffold.route.decorator</code></td><td><code>src/flask/sansio/scaffold.py</code></td><td>2</td><td>0</td><td>—</td></tr>
+<tr class=''><td><code>tests.test_basic.test_inject_blueprint_url_defaults</code></td><td><code>tests/test_basic.py</code></td><td>2</td><td>0</td><td>✅</td></tr>
+<tr class=''><td><code>tests.test_basic.test_response_type_errors</code></td><td><code>tests/test_basic.py</code></td><td>2</td><td>0</td><td>✅</td></tr>
+<tr class=''><td><code>tests.test_basic.test_server_name_matching</code></td><td><code>tests/test_basic.py</code></td><td>2</td><td>0</td><td>✅</td></tr>
+<tr class=''><td><code>tests.test_basic.test_server_name_subdomain</code></td><td><code>tests/test_basic.py</code></td><td>2</td><td>0</td><td>✅</td></tr>
+<tr class=''><td><code>tests.test_basic.test_static_folder_with_ending_slash</code></td><td><code>tests/test_basic.py</code></td><td>2</td><td>0</td><td>✅</td></tr>
+<tr class=''><td><code>tests.test_basic.test_subdomain_basic_support</code></td><td><code>tests/test_basic.py</code></td><td>2</td><td>0</td><td>✅</td></tr>
+<tr class=''><td><code>tests.test_basic.test_subdomain_matching</code></td><td><code>tests/test_basic.py</code></td><td>2</td><td>0</td><td>✅</td></tr>
+<tr class=''><td><code>tests.test_basic.test_subdomain_matching_other_name</code></td><td><code>tests/test_basic.py</code></td><td>2</td><td>0</td><td>✅</td></tr>
+<tr class=''><td><code>tests.test_basic.test_subdomain_matching_with_ports</code></td><td><code>tests/test_basic.py</code></td><td>2</td><td>0</td><td>✅</td></tr>
+<tr class=''><td><code>tests.test_blueprints.test_add_template_filter</code></td><td><code>tests/test_blueprints.py</code></td><td>2</td><td>0</td><td>✅</td></tr>
+<tr class=''><td><code>tests.test_blueprints.test_add_template_filter_with_name</code></td><td><code>tests/test_blueprints.py</code></td><td>2</td><td>0</td><td>✅</td></tr>
+<tr class=''><td><code>tests.test_blueprints.test_add_template_filter_with_name_and_template</code></td><td><code>tests/test_blueprints.py</code></td><td>2</td><td>0</td><td>✅</td></tr>
+<tr class=''><td><code>tests.test_blueprints.test_add_template_filter_with_template</code></td><td><code>tests/test_blueprints.py</code></td><td>2</td><td>0</td><td>✅</td></tr>
+<tr class=''><td><code>tests.test_blueprints.test_add_template_test</code></td><td><code>tests/test_blueprints.py</code></td><td>2</td><td>0</td><td>✅</td></tr>
+<tr class=''><td><code>tests.test_blueprints.test_add_template_test_with_name</code></td><td><code>tests/test_blueprints.py</code></td><td>2</td><td>0</td><td>✅</td></tr>
+<tr class=''><td><code>tests.test_blueprints.test_add_template_test_with_name_and_template</code></td><td><code>tests/test_blueprints.py</code></td><td>2</td><td>0</td><td>✅</td></tr>
+<tr class=''><td><code>tests.test_blueprints.test_add_template_test_with_template</code></td><td><code>tests/test_blueprints.py</code></td><td>2</td><td>0</td><td>✅</td></tr>
+<tr class=''><td><code>tests.test_blueprints.test_app_request_processing</code></td><td><code>tests/test_blueprints.py</code></td><td>2</td><td>0</td><td>✅</td></tr>
+<tr class=''><td><code>tests.test_blueprints.test_app_url_processors</code></td><td><code>tests/test_blueprints.py</code></td><td>2</td><td>0</td><td>✅</td></tr>
+<tr class=''><td><code>tests.test_blueprints.test_blueprint_app_error_handling</code></td><td><code>tests/test_blueprints.py</code></td><td>2</td><td>0</td><td>✅</td></tr>
+<tr class=''><td><code>tests.test_blueprints.test_blueprint_prefix_slash</code></td><td><code>tests/test_blueprints.py</code></td><td>2</td><td>0</td><td>✅</td></tr>
+<tr class=''><td><code>tests.test_blueprints.test_blueprint_renaming</code></td><td><code>tests/test_blueprints.py</code></td><td>2</td><td>0</td><td>✅</td></tr>
+<tr class=''><td><code>tests.test_blueprints.test_blueprint_specific_error_handling</code></td><td><code>tests/test_blueprints.py</code></td><td>2</td><td>0</td><td>✅</td></tr>
+<tr class=''><td><code>tests.test_blueprints.test_blueprint_specific_user_error_handling</code></td><td><code>tests/test_blueprints.py</code></td><td>2</td><td>0</td><td>✅</td></tr>
+<tr class=''><td><code>tests.test_blueprints.test_blueprint_url_defaults</code></td><td><code>tests/test_blueprints.py</code></td><td>2</td><td>0</td><td>✅</td></tr>
+<tr class=''><td><code>tests.test_blueprints.test_blueprint_url_processors</code></td><td><code>tests/test_blueprints.py</code></td><td>2</td><td>0</td><td>✅</td></tr>
+<tr class=''><td><code>tests.test_blueprints.test_child_and_parent_subdomain</code></td><td><code>tests/test_blueprints.py</code></td><td>2</td><td>0</td><td>✅</td></tr>
+<tr class=''><td><code>tests.test_blueprints.test_context_processing</code></td><td><code>tests/test_blueprints.py</code></td><td>2</td><td>0</td><td>✅</td></tr>
+<tr class=''><td><code>tests.test_blueprints.test_dotted_names_from_app</code></td><td><code>tests/test_blueprints.py</code></td><td>2</td><td>0</td><td>✅</td></tr>
+<tr class=''><td><code>tests.test_blueprints.test_empty_url_defaults</code></td><td><code>tests/test_blueprints.py</code></td><td>2</td><td>0</td><td>✅</td></tr>
+<tr class=''><td><code>tests.test_blueprints.test_endpoint_decorator</code></td><td><code>tests/test_blueprints.py</code></td><td>2</td><td>0</td><td>✅</td></tr>
+<tr class=''><td><code>tests.test_blueprints.test_nested_blueprint</code></td><td><code>tests/test_blueprints.py</code></td><td>2</td><td>0</td><td>✅</td></tr>
+<tr class=''><td><code>tests.test_blueprints.test_nested_callback_order</code></td><td><code>tests/test_blueprints.py</code></td><td>2</td><td>0</td><td>✅</td></tr>
+<tr class=''><td><code>tests.test_blueprints.test_nesting_subdomains</code></td><td><code>tests/test_blueprints.py</code></td><td>2</td><td>0</td><td>✅</td></tr>
+<tr class=''><td><code>tests.test_blueprints.test_nesting_url_prefixes</code></td><td><code>tests/test_blueprints.py</code></td><td>2</td><td>0</td><td>✅</td></tr>
+<tr class=''><td><code>tests.test_blueprints.test_request_processing</code></td><td><code>tests/test_blueprints.py</code></td><td>2</td><td>0</td><td>✅</td></tr>
+<tr class=''><td><code>tests.test_blueprints.test_route_decorator_custom_endpoint</code></td><td><code>tests/test_blueprints.py</code></td><td>2</td><td>0</td><td>✅</td></tr>
+<tr class=''><td><code>tests.test_blueprints.test_route_decorator_custom_endpoint_with_dots</code></td><td><code>tests/test_blueprints.py</code></td><td>2</td><td>0</td><td>✅</td></tr>
+<tr class=''><td><code>tests.test_blueprints.test_self_registration</code></td><td><code>tests/test_blueprints.py</code></td><td>2</td><td>0</td><td>✅</td></tr>
+<tr class=''><td><code>tests.test_blueprints.test_template_filter</code></td><td><code>tests/test_blueprints.py</code></td><td>2</td><td>0</td><td>✅</td></tr>
+<tr class=''><td><code>tests.test_blueprints.test_template_filter_after_route_with_template</code></td><td><code>tests/test_blueprints.py</code></td><td>2</td><td>0</td><td>✅</td></tr>
+<tr class=''><td><code>tests.test_blueprints.test_template_filter_with_name</code></td><td><code>tests/test_blueprints.py</code></td><td>2</td><td>0</td><td>✅</td></tr>
+<tr class=''><td><code>tests.test_blueprints.test_template_filter_with_name_and_template</code></td><td><code>tests/test_blueprints.py</code></td><td>2</td><td>0</td><td>✅</td></tr>
+<tr class=''><td><code>tests.test_blueprints.test_template_filter_with_template</code></td><td><code>tests/test_blueprints.py</code></td><td>2</td><td>0</td><td>✅</td></tr>
+<tr class=''><td><code>tests.test_blueprints.test_template_global</code></td><td><code>tests/test_blueprints.py</code></td><td>2</td><td>0</td><td>✅</td></tr>
+<tr class=''><td><code>tests.test_blueprints.test_template_test</code></td><td><code>tests/test_blueprints.py</code></td><td>2</td><td>0</td><td>✅</td></tr>
+<tr class=''><td><code>tests.test_blueprints.test_template_test_after_route_with_template</code></td><td><code>tests/test_blueprints.py</code></td><td>2</td><td>0</td><td>✅</td></tr>
+<tr class=''><td><code>tests.test_blueprints.test_template_test_with_name</code></td><td><code>tests/test_blueprints.py</code></td><td>2</td><td>0</td><td>✅</td></tr>
+<tr class=''><td><code>tests.test_blueprints.test_template_test_with_name_and_template</code></td><td><code>tests/test_blueprints.py</code></td><td>2</td><td>0</td><td>✅</td></tr>
+<tr class=''><td><code>tests.test_blueprints.test_template_test_with_template</code></td><td><code>tests/test_blueprints.py</code></td><td>2</td><td>0</td><td>✅</td></tr>
+<tr class=''><td><code>tests.test_session_interface.test_open_session_with_endpoint</code></td><td><code>tests/test_session_interface.py</code></td><td>2</td><td>0</td><td>✅</td></tr>
+<tr class=''><td><code>tests.test_signals.test_before_render_template</code></td><td><code>tests/test_signals.py</code></td><td>2</td><td>0</td><td>✅</td></tr>
+<tr class=''><td><code>tests.test_signals.test_request_exception_signal</code></td><td><code>tests/test_signals.py</code></td><td>2</td><td>0</td><td>✅</td></tr>
+<tr class=''><td><code>tests.test_signals.test_request_signals</code></td><td><code>tests/test_signals.py</code></td><td>2</td><td>0</td><td>✅</td></tr>
+<tr class=''><td><code>tests.test_testing.test_blueprint_with_subdomain</code></td><td><code>tests/test_testing.py</code></td><td>2</td><td>0</td><td>✅</td></tr>
+<tr class=''><td><code>tests.test_testing.test_subdomain</code></td><td><code>tests/test_testing.py</code></td><td>2</td><td>0</td><td>✅</td></tr>
+<tr class=''><td><code>tests.test_user_error_handler.test_default_error_handler</code></td><td><code>tests/test_user_error_handler.py</code></td><td>2</td><td>0</td><td>✅</td></tr>
+<tr class=''><td><code>tests.test_user_error_handler.test_error_handler_blueprint</code></td><td><code>tests/test_user_error_handler.py</code></td><td>2</td><td>0</td><td>✅</td></tr></tbody></table>
+</body></html>
