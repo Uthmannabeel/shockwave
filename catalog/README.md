@@ -8,6 +8,10 @@ Transcend hackathon (Showcase track):
 | [`agent.yaml`](agent.yaml) | A conversational **agent** — ask *"blast radius of `process_payment`?"* |
 | [`flow.yaml`](flow.yaml) | An MR-triggered **flow** that posts a blast-radius review comment |
 
+> ✅ **Published:** the agent is live in the GitLab AI Catalog —
+> <https://gitlab.com/explore/ai-catalog/agents/1011457/>
+> (managed by `uthmannabeel-group / Shockwave-project`, Public, v1.0.0).
+
 Both use **Orbit Remote**'s MCP tools (`query_graph`, `get_graph_schema`). The
 Python engine in [`../shockwave/`](../shockwave) is the local reference
 implementation of the same algorithm (runs against Orbit Local).

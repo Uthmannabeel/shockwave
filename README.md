@@ -5,6 +5,8 @@
 Shockwave is a blast-radius impact-analysis tool built on the [GitLab Orbit](https://about.gitlab.com/gitlab-orbit/) knowledge graph. Point it at a changed function, file, or git diff and it traverses Orbit's resolved code graph — calls, imports, and inheritance — to show you *everything* a change can ripple into: every caller, the tests that should re-run, and the highest-risk **untested** call sites, ranked.
 
 > Built for the **GitLab Transcend Hackathon** (Showcase track).
+>
+> 🟢 **Live in the GitLab AI Catalog:** [Shockwave Blast Radius agent](https://gitlab.com/explore/ai-catalog/agents/1011457/)
 
 ---
 
