@@ -7,6 +7,14 @@
 # Setup (one-time, in the project):
 #   Settings > CI/CD > Variables > add `GITLAB_TOKEN` (masked, `api` scope).
 #   Orbit must be enabled on the group (Group > Settings > Orbit).
+#   (On GitLab.com, a newly created account must verify its identity before
+#    shared runners will execute pipelines.)
+
+# Only run for merge requests — no redundant branch/push pipelines.
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+
 shockwave-blast-radius:
   image: python:3.11-slim
   rules:

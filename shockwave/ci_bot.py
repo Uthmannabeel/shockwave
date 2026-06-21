@@ -16,7 +16,7 @@ import os
 import sys
 
 from . import blast_radius, report
-from .orbit_client import RemoteBackend, OrbitError
+from .orbit_client import RemoteBackend, OrbitError, enable_os_trust
 
 CODE_EXTENSIONS = (
     ".py", ".rb", ".js", ".ts", ".tsx", ".jsx", ".go", ".java", ".kt",
@@ -66,6 +66,7 @@ def _post_note(api: str, token: str, project_id: str, mr_iid: str, body: str) ->
 
 def main(argv: list[str] | None = None) -> int:
     try:
+        enable_os_trust()
         server = _env("CI_SERVER_URL", "https://gitlab.com")
         api = os.environ.get("CI_API_V4_URL", f"{server}/api/v4")
         token = _env("GITLAB_TOKEN")

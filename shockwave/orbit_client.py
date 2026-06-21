@@ -19,6 +19,21 @@ class OrbitError(RuntimeError):
     """Raised when an Orbit query cannot be run or returns an error."""
 
 
+def enable_os_trust() -> None:
+    """Make urllib3/requests use the OS trust store.
+
+    On networks that intercept TLS (corporate proxies), Python's bundled CA set
+    won't trust the proxy's cert. truststore fixes that. No-op if unavailable or
+    on networks that don't need it.
+    """
+    try:
+        import truststore
+
+        truststore.inject_into_ssl()
+    except Exception:  # pragma: no cover - best effort
+        pass
+
+
 class OrbitBackend(Protocol):
     def sql(self, query: str) -> list[dict[str, Any]]:
         """Run a query and return rows as a list of dicts."""
@@ -96,15 +111,7 @@ class RemoteBackend:
     def _query(self, query: dict[str, Any]) -> dict[str, Any]:
         import requests
 
-        # On networks that intercept TLS (corporate proxies), Python's bundled
-        # CA set won't trust the proxy's cert. truststore makes urllib3/requests
-        # use the OS trust store, which does. No-op if truststore isn't present.
-        try:
-            import truststore
-
-            truststore.inject_into_ssl()
-        except Exception:  # pragma: no cover - best effort
-            pass
+        enable_os_trust()
 
         url = f"{self.base_url}/api/v4/orbit/query"
         try:
