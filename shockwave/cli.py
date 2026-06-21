@@ -81,12 +81,17 @@ def main(argv: list[str] | None = None) -> int:
     try:
         backend = _backend(args)
         if args.command == "analyze":
-            radius = blast_radius.compute(backend, args.seed, max_hops=args.max_hops)
+            if args.remote:
+                radius = blast_radius.compute_remote(backend, args.seed, max_hops=args.max_hops)
+            else:
+                radius = blast_radius.compute(backend, args.seed, max_hops=args.max_hops)
         elif args.command == "diff":
             files = _changed_files(args.gitref)
             if not files:
                 print(f"No changed files vs {args.gitref}.", file=sys.stderr)
                 return 0
+            if args.remote:
+                raise OrbitError("`diff --remote` is not supported yet; use `analyze <symbol> --remote`.")
             radius = blast_radius.compute_for_files(backend, files, max_hops=args.max_hops)
         else:  # pragma: no cover - argparse enforces
             raise OrbitError(f"unknown command {args.command}")

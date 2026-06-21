@@ -12,8 +12,9 @@ license = { file = "LICENSE" }
 authors = [{ name = "Nabeel Uthman" }]
 keywords = ["gitlab", "orbit", "knowledge-graph", "impact-analysis", "code-review"]
 dependencies = [
-    "rich>=13.7",      # pretty CLI reports
-    "requests>=2.31",  # Orbit Remote REST backend
+    "rich>=13.7",        # pretty CLI reports
+    "requests>=2.31",    # Orbit Remote REST backend
+    "truststore>=0.9",   # use the OS trust store (TLS-intercepting corp networks)
 ]
 
 [project.optional-dependencies]

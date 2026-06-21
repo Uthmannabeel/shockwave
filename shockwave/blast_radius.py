@@ -202,6 +202,88 @@ def compute(backend: OrbitBackend, seed: str, max_hops: int = 5) -> BlastRadius:
     return _walk(seed, seeds_meta, defs, inbound, max_hops)
 
 
+def _meta_from_remote(node: dict) -> DefMeta:
+    return DefMeta(
+        id=int(node["id"]),
+        name=node.get("name") or "",
+        fqn=node.get("fqn") or "",
+        file_path=node.get("file_path") or "",
+        definition_type=node.get("definition_type") or "",
+    )
+
+
+def _seed_matches(meta: DefMeta, seed: str) -> bool:
+    if "." in seed:
+        return meta.fqn == seed or meta.fqn.endswith("." + seed) or meta.name == seed
+    return meta.name == seed
+
+
+def compute_remote(backend, seed: str, max_hops: int = 5) -> BlastRadius:
+    """Blast radius against Orbit Remote via iterative anchored traversal.
+
+    Remote forbids full-graph scans, so we expand one hop at a time: resolve the
+    seed (+ its direct callers) with a property filter, then walk outward by
+    ``node_ids``. Remote already resolves cross-file calls to direct
+    Definition->Definition edges, so CALLS + EXTENDS is the whole story.
+    """
+    looks_like_path = ("/" in seed) or ("\\" in seed) or os.path.splitext(seed)[1] != ""
+    if looks_like_path:
+        anchor = {"file_path": _norm(seed)}
+    else:
+        anchor = {"name": seed.split(".")[-1]}
+
+    defs: dict[int, DefMeta] = {}
+    inbound: dict[int, set[int]] = {}
+
+    def ingest(nodes: dict[int, dict], edges: list[tuple[int, int]]):
+        for nid, nd in nodes.items():
+            defs.setdefault(nid, _meta_from_remote(nd))
+        for caller, callee in edges:
+            inbound.setdefault(callee, set()).add(caller)
+
+    # hop 1: resolve the seed and its direct callers in one anchored query
+    nodes, edges = backend.callers_by_filter(anchor)
+    ingest(nodes, edges)
+    if looks_like_path:
+        seed_ids = {callee for _, callee in edges}
+    else:
+        seed_ids = {callee for _, callee in edges if callee in defs and _seed_matches(defs[callee], seed)}
+
+    depth: dict[int, int] = {}
+    visited = set(seed_ids)
+    frontier: set[int] = set()
+    for caller, callee in edges:
+        if callee in seed_ids and caller not in visited:
+            depth[caller] = 1
+            visited.add(caller)
+            frontier.add(caller)
+
+    d = 1
+    while frontier and d < max_hops:
+        nodes, edges = backend.callers_by_ids(list(frontier))
+        ingest(nodes, edges)
+        nxt: set[int] = set()
+        for caller, callee in edges:
+            if caller in visited or caller in seed_ids:
+                continue
+            depth[caller] = d + 1
+            visited.add(caller)
+            nxt.add(caller)
+        frontier = nxt
+        d += 1
+
+    affected = [AffectedNode(meta=defs[i], depth=dep) for i, dep in depth.items() if i in defs]
+    affected.sort(key=lambda a: (a.depth, a.file_path, a.fqn))
+    return BlastRadius(
+        seed=seed,
+        seed_ids=sorted(seed_ids),
+        seeds_meta=[defs[i] for i in seed_ids if i in defs],
+        affected=affected,
+        defs_by_id=defs,
+        inbound=inbound,
+    )
+
+
 def compute_for_files(
     backend: OrbitBackend, files: list[str], max_hops: int = 5
 ) -> BlastRadius:

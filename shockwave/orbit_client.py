@@ -75,17 +75,94 @@ class LocalBackend:
 class RemoteBackend:
     """Query Orbit Remote via POST /api/v4/orbit/query (JSON DSL).
 
-    Orbit Remote speaks a JSON DSL rather than raw SQL, so this backend is a
-    thin placeholder: the Catalog agent (``catalog/agent.yaml``) is the primary
-    Remote consumer. Implemented opportunistically.
+    Orbit Remote speaks a JSON traversal DSL (not raw SQL) and **forbids
+    full-graph scans** — every query must be anchored by ``filters`` or
+    ``node_ids``. It also resolves cross-file calls into direct
+    ``Definition --CALLS--> Definition`` edges (no ImportedSymbol bridge needed).
+    So the blast radius is computed by *iterative* BFS: one anchored query per
+    hop (see ``blast_radius.compute_remote``).
+
+    This backend exposes ``callers`` — given a set of definitions (by id or by a
+    property filter), return who CALLS/EXTENDS them, with node metadata.
     """
+
+    # edges that mean "the source depends on the target"
+    INBOUND_EDGE_TYPES = ("CALLS", "EXTENDS")
 
     def __init__(self, base_url: str, token: str) -> None:
         self.base_url = base_url.rstrip("/")
         self.token = token
 
+    def _query(self, query: dict[str, Any]) -> dict[str, Any]:
+        import requests
+
+        # On networks that intercept TLS (corporate proxies), Python's bundled
+        # CA set won't trust the proxy's cert. truststore makes urllib3/requests
+        # use the OS trust store, which does. No-op if truststore isn't present.
+        try:
+            import truststore
+
+            truststore.inject_into_ssl()
+        except Exception:  # pragma: no cover - best effort
+            pass
+
+        url = f"{self.base_url}/api/v4/orbit/query"
+        try:
+            resp = requests.post(
+                url,
+                headers={
+                    "PRIVATE-TOKEN": self.token,
+                    "User-Agent": "Shockwave-BlastRadius/0.1",
+                    "Accept": "application/json",
+                },
+                json={"query": query, "response_format": "raw"},
+                timeout=60,
+            )
+        except requests.RequestException as exc:  # pragma: no cover - network
+            raise OrbitError(f"Orbit Remote request failed: {exc}") from exc
+        if resp.status_code != 200:
+            raise OrbitError(
+                f"Orbit query failed (HTTP {resp.status_code}): {resp.text}"
+            )
+        return resp.json().get("result", {})
+
+    def _callers(self, callee_anchor: dict[str, Any]) -> tuple[dict[int, dict], list[tuple[int, int]]]:
+        """Return (nodes_by_id, edges) where each edge is (caller_id, callee_id).
+
+        ``callee_anchor`` anchors the callee node, e.g. ``{"node_ids": [..]}`` or
+        ``{"filters": {"name": "compute"}}``. Runs once per inbound edge type.
+        """
+        nodes: dict[int, dict] = {}
+        edges: list[tuple[int, int]] = []
+        for edge_type in self.INBOUND_EDGE_TYPES:
+            query = {
+                "query_type": "traversal",
+                "nodes": [
+                    {"id": "callee", "entity": "Definition", **callee_anchor},
+                    {"id": "caller", "entity": "Definition"},
+                ],
+                "relationships": [{"type": edge_type, "from": "caller", "to": "callee"}],
+            }
+            try:
+                result = self._query(query)
+            except OrbitError:
+                # an edge type with no instances can 400; treat as empty
+                continue
+            for node in result.get("nodes", []):
+                nid = int(node["id"])
+                nodes[nid] = node
+            for edge in result.get("edges", []):
+                edges.append((int(edge["from_id"]), int(edge["to_id"])))
+        return nodes, edges
+
+    def callers_by_filter(self, filters: dict[str, Any]):
+        return self._callers({"filters": filters})
+
+    def callers_by_ids(self, node_ids: list[int]):
+        return self._callers({"node_ids": [int(i) for i in node_ids]})
+
     def sql(self, query: str) -> list[dict[str, Any]]:  # pragma: no cover
         raise OrbitError(
-            "RemoteBackend does not accept raw SQL. Use the AI Catalog agent for "
-            "Orbit Remote, or run Shockwave against Orbit Local."
+            "RemoteBackend speaks the JSON DSL, not SQL. Blast radius on Orbit "
+            "Remote is computed via iterative traversal (see compute_remote)."
         )

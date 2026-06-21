@@ -73,6 +73,25 @@ pip install -e .
 shockwave analyze process_payment --format md
 ```
 
+### Against Orbit Remote (the hosted graph)
+
+Shockwave also runs against **Orbit Remote** over its REST API — no local index
+needed. Because Remote forbids full-graph scans, the blast radius is computed by
+*iterative anchored traversal* (one query per hop):
+
+```bash
+shockwave analyze compute --remote https://gitlab.com --token "$GITLAB_TOKEN"
+```
+
+Example (live `gitlab.com` graph of this very repo):
+
+```text
+# ⚡ Blast radius: `shockwave.blast_radius.compute`
+**9** definitions across **2** files depend on this change.
+  shockwave/cli.py · main
+  tests/test_blast_radius.py · test_depths, test_cycle_terminates, …
+```
+
 ## Status
 
 🚧 Under active development for the hackathon. See the build plan and `docs/`.
