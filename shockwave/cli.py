@@ -91,8 +91,9 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"No changed files vs {args.gitref}.", file=sys.stderr)
                 return 0
             if args.remote:
-                raise OrbitError("`diff --remote` is not supported yet; use `analyze <symbol> --remote`.")
-            radius = blast_radius.compute_for_files(backend, files, max_hops=args.max_hops)
+                radius = blast_radius.compute_for_files_remote(backend, files, max_hops=args.max_hops)
+            else:
+                radius = blast_radius.compute_for_files(backend, files, max_hops=args.max_hops)
         else:  # pragma: no cover - argparse enforces
             raise OrbitError(f"unknown command {args.command}")
 

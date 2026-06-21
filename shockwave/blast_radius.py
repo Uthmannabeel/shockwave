@@ -228,7 +228,8 @@ def compute_remote(backend, seed: str, max_hops: int = 5) -> BlastRadius:
     """
     looks_like_path = ("/" in seed) or ("\\" in seed) or os.path.splitext(seed)[1] != ""
     if looks_like_path:
-        anchor = {"file_path": _norm(seed)}
+        # Orbit stores file_path with original case and forward slashes.
+        anchor = {"file_path": seed.replace("\\", "/").lstrip("./")}
     else:
         anchor = {"name": seed.split(".")[-1]}
 
@@ -276,6 +277,37 @@ def compute_remote(backend, seed: str, max_hops: int = 5) -> BlastRadius:
     affected.sort(key=lambda a: (a.depth, a.file_path, a.fqn))
     return BlastRadius(
         seed=seed,
+        seed_ids=sorted(seed_ids),
+        seeds_meta=[defs[i] for i in seed_ids if i in defs],
+        affected=affected,
+        defs_by_id=defs,
+        inbound=inbound,
+    )
+
+
+def compute_for_files_remote(backend, files: list[str], max_hops: int = 5) -> BlastRadius:
+    """Remote blast radius of changing anything in ``files`` (merged)."""
+    defs: dict[int, DefMeta] = {}
+    inbound: dict[int, set[int]] = {}
+    depth: dict[int, int] = {}
+    seed_ids: set[int] = set()
+    for f in files:
+        br = compute_remote(backend, f, max_hops=max_hops)
+        defs.update(br.defs_by_id)
+        for callee, callers in br.inbound.items():
+            inbound.setdefault(callee, set()).update(callers)
+        seed_ids.update(br.seed_ids)
+        for a in br.affected:
+            if a.meta.id not in depth or a.depth < depth[a.meta.id]:
+                depth[a.meta.id] = a.depth
+    affected = [
+        AffectedNode(meta=defs[i], depth=d)
+        for i, d in depth.items()
+        if i in defs and i not in seed_ids
+    ]
+    affected.sort(key=lambda a: (a.depth, a.file_path, a.fqn))
+    return BlastRadius(
+        seed=", ".join(files),
         seed_ids=sorted(seed_ids),
         seeds_meta=[defs[i] for i in seed_ids if i in defs],
         affected=affected,

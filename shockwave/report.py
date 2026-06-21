@@ -7,6 +7,7 @@ from collections import defaultdict
 
 from .blast_radius import BlastRadius
 from . import risk as risk_mod
+from . import stubs as stubs_mod
 
 
 def _seed_label(radius: BlastRadius) -> str:
@@ -48,6 +49,18 @@ def to_markdown(radius: BlastRadius) -> str:
                 f"| `{r.fqn or r.name}` | `{r.file_path}` | {r.depth} | {r.fan_in} | {r.score} |"
             )
         lines.append("")
+
+    if hotspots:
+        lines.append("## 🧪 Suggested tests (pin the contract before you change it)")
+        lines.append("")
+        for stub in stubs_mod.suggest(radius):
+            lines.append(f"<details><summary><code>{stub.fqn}</code></summary>")
+            lines.append("")
+            lines.append("```python")
+            lines.append(stub.code.rstrip())
+            lines.append("```")
+            lines.append("</details>")
+            lines.append("")
 
     lines.append("## Affected definitions by file")
     lines.append("")
@@ -125,6 +138,10 @@ def to_dict(radius: BlastRadius) -> dict:
                 "is_hotspot": r.is_hotspot,
             }
             for r in ranked
+        ],
+        "suggested_tests": [
+            {"fqn": s.fqn, "file_path": s.file_path, "code": s.code}
+            for s in stubs_mod.suggest(radius)
         ],
     }
 

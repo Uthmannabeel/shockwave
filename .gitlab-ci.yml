@@ -1,0 +1,16 @@
+# Shockwave blast-radius bot.
+#
+# On every merge request, this posts a review comment showing the blast radius
+# of the change — every caller/dependent affected, untested hotspots, and
+# suggested test stubs — computed from the GitLab Orbit knowledge graph.
+#
+# Setup (one-time, in the project):
+#   Settings > CI/CD > Variables > add `GITLAB_TOKEN` (masked, `api` scope).
+#   Orbit must be enabled on the group (Group > Settings > Orbit).
+shockwave-blast-radius:
+  image: python:3.11-slim
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+  script:
+    - pip install --quiet -e .
+    - shockwave-bot
