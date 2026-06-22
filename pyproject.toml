@@ -12,13 +12,11 @@ license = { file = "LICENSE" }
 authors = [{ name = "Nabeel Uthman" }]
 keywords = ["gitlab", "orbit", "knowledge-graph", "impact-analysis", "code-review"]
 dependencies = [
-    "rich>=13.7",        # pretty CLI reports
-    "requests>=2.31",    # Orbit Remote REST backend
+    "requests>=2.31",    # Orbit Remote REST backend + GitLab API (CI bot)
     "truststore>=0.9",   # use the OS trust store (TLS-intercepting corp networks)
 ]
 
 [project.optional-dependencies]
-fast = ["duckdb>=0.10"]   # optional direct-DB fast path
 dev = ["pytest>=8.0"]
 
 [project.scripts]

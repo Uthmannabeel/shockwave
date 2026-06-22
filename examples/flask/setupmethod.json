@@ -1267,5 +1267,42 @@
       "score": 0.0,
       "is_hotspot": false
     }
+  ],
+  "suggested_tests": [
+    {
+      "fqn": "src.flask.sansio.blueprints.Blueprint.record_once",
+      "file_path": "src/flask/sansio/blueprints.py",
+      "code": "def test_record_once_impact():\n    \"\"\"Cover src.flask.sansio.blueprints.Blueprint.record_once.\n\n    Flagged by Shockwave: 10 dependents, no test calls it directly,\n    depth 1 in the blast radius. Changing it could break callers silently.\n    \"\"\"\n    from src.flask.sansio.blueprints import record_once  # noqa: import inside test for the stub\n    # TODO: arrange inputs, call record_once(...), and assert the behavior\n    # callers depend on the current contract \u2014 pin it here first.\n    raise NotImplementedError\n"
+    },
+    {
+      "fqn": "src.flask.sansio.scaffold.Scaffold._method_route",
+      "file_path": "src/flask/sansio/scaffold.py",
+      "code": "def test__method_route_impact():\n    \"\"\"Cover src.flask.sansio.scaffold.Scaffold._method_route.\n\n    Flagged by Shockwave: 5 dependents, no test calls it directly,\n    depth 2 in the blast radius. Changing it could break callers silently.\n    \"\"\"\n    from src.flask.sansio.scaffold import _method_route  # noqa: import inside test for the stub\n    # TODO: arrange inputs, call _method_route(...), and assert the behavior\n    # callers depend on the current contract \u2014 pin it here first.\n    raise NotImplementedError\n"
+    },
+    {
+      "fqn": "src.flask.sansio.app.App.add_template_filter",
+      "file_path": "src/flask/sansio/app.py",
+      "code": "def test_add_template_filter_impact():\n    \"\"\"Cover src.flask.sansio.app.App.add_template_filter.\n\n    Flagged by Shockwave: 2 dependents, no test calls it directly,\n    depth 1 in the blast radius. Changing it could break callers silently.\n    \"\"\"\n    from src.flask.sansio.app import add_template_filter  # noqa: import inside test for the stub\n    # TODO: arrange inputs, call add_template_filter(...), and assert the behavior\n    # callers depend on the current contract \u2014 pin it here first.\n    raise NotImplementedError\n"
+    },
+    {
+      "fqn": "src.flask.sansio.app.App.add_template_global",
+      "file_path": "src/flask/sansio/app.py",
+      "code": "def test_add_template_global_impact():\n    \"\"\"Cover src.flask.sansio.app.App.add_template_global.\n\n    Flagged by Shockwave: 2 dependents, no test calls it directly,\n    depth 1 in the blast radius. Changing it could break callers silently.\n    \"\"\"\n    from src.flask.sansio.app import add_template_global  # noqa: import inside test for the stub\n    # TODO: arrange inputs, call add_template_global(...), and assert the behavior\n    # callers depend on the current contract \u2014 pin it here first.\n    raise NotImplementedError\n"
+    },
+    {
+      "fqn": "src.flask.sansio.app.App.add_template_test",
+      "file_path": "src/flask/sansio/app.py",
+      "code": "def test_add_template_test_impact():\n    \"\"\"Cover src.flask.sansio.app.App.add_template_test.\n\n    Flagged by Shockwave: 2 dependents, no test calls it directly,\n    depth 1 in the blast radius. Changing it could break callers silently.\n    \"\"\"\n    from src.flask.sansio.app import add_template_test  # noqa: import inside test for the stub\n    # TODO: arrange inputs, call add_template_test(...), and assert the behavior\n    # callers depend on the current contract \u2014 pin it here first.\n    raise NotImplementedError\n"
+    },
+    {
+      "fqn": "src.flask.sansio.blueprints.Blueprint.add_app_template_global",
+      "file_path": "src/flask/sansio/blueprints.py",
+      "code": "def test_add_app_template_global_impact():\n    \"\"\"Cover src.flask.sansio.blueprints.Blueprint.add_app_template_global.\n\n    Flagged by Shockwave: 2 dependents, no test calls it directly,\n    depth 1 in the blast radius. Changing it could break callers silently.\n    \"\"\"\n    from src.flask.sansio.blueprints import add_app_template_global  # noqa: import inside test for the stub\n    # TODO: arrange inputs, call add_app_template_global(...), and assert the behavior\n    # callers depend on the current contract \u2014 pin it here first.\n    raise NotImplementedError\n"
+    },
+    {
+      "fqn": "src.flask.sansio.blueprints.Blueprint.record",
+      "file_path": "src/flask/sansio/blueprints.py",
+      "code": "def test_record_impact():\n    \"\"\"Cover src.flask.sansio.blueprints.Blueprint.record.\n\n    Flagged by Shockwave: 2 dependents, no test calls it directly,\n    depth 1 in the blast radius. Changing it could break callers silently.\n    \"\"\"\n    from src.flask.sansio.blueprints import record  # noqa: import inside test for the stub\n    # TODO: arrange inputs, call record(...), and assert the behavior\n    # callers depend on the current contract \u2014 pin it here first.\n    raise NotImplementedError\n"
+    }
   ]
 }

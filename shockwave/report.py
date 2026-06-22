@@ -2,8 +2,21 @@
 
 from __future__ import annotations
 
+import html
 import json
 from collections import defaultdict
+
+
+def _mlabel(text: str) -> str:
+    """Make a string safe to drop inside a Mermaid ``["..."]`` node label."""
+    return (
+        text.replace("\\", "/")
+        .replace('"', "'")
+        .replace("[", "(").replace("]", ")")
+        .replace("{", "(").replace("}", ")")
+        .replace("|", "/").replace("<", "&lt;").replace(">", "&gt;")
+        .replace("`", "'")
+    )
 
 from .blast_radius import BlastRadius
 from . import risk as risk_mod
@@ -35,12 +48,14 @@ def to_markdown(radius: BlastRadius) -> str:
     )
     if hotspots:
         lines.append(
-            f" 🔥 **{len(hotspots)}** high-impact **untested** hotspot(s) need review."
+            f" 🔥 **{len(hotspots)}** high-impact hotspot(s) with **no direct test** need review."
         )
     lines.append("")
 
     if hotspots:
-        lines.append("## 🔥 Untested hotspots (review first)")
+        lines.append("## 🔥 Hotspots with no direct test (review first)")
+        lines.append("")
+        lines.append("_High fan-in definitions in non-test code that no test calls directly._")
         lines.append("")
         lines.append("| Definition | File | Depth | Fan-in | Risk |")
         lines.append("| --- | --- | --: | --: | --: |")
@@ -50,7 +65,6 @@ def to_markdown(radius: BlastRadius) -> str:
             )
         lines.append("")
 
-    if hotspots:
         lines.append("## 🧪 Suggested tests (pin the contract before you change it)")
         lines.append("")
         for stub in stubs_mod.suggest(radius):
@@ -71,7 +85,7 @@ def to_markdown(radius: BlastRadius) -> str:
         tag = " *(tests)*" if risk_mod.is_test_path(fp) else ""
         lines.append(f"### `{fp}`{tag}")
         lines.append("")
-        lines.append("| Definition | Type | Depth | Fan-in | Tested |")
+        lines.append("| Definition | Type | Depth | Fan-in | Direct test |")
         lines.append("| --- | --- | --: | --: | :-: |")
         for r in sorted(by_file[fp], key=lambda x: (x.depth, x.fqn)):
             tested = "✅" if r.covered_by_test else "—"
@@ -91,12 +105,12 @@ def to_mermaid(radius: BlastRadius) -> str:
     seed_set = set(radius.seed_ids)
     for sid in radius.seed_ids:
         m = radius.defs_by_id.get(sid)
-        label = (m.name if m else str(sid))
+        label = _mlabel(m.name if m else str(sid))
         lines.append(f'  {nid(sid)}["{label}"]:::seed')
     affected_ids = {a.meta.id for a in radius.affected}
     for a in radius.affected:
         cls = ":::hot" if not risk_mod.is_test_path(a.file_path) else ":::test"
-        lines.append(f'  {nid(a.meta.id)}["{a.meta.name}"]{cls}')
+        lines.append(f'  {nid(a.meta.id)}["{_mlabel(a.meta.name)}"]{cls}')
     # draw inbound edges that stay within the blast set (caller -> callee)
     relevant = affected_ids | seed_set
     for callee, callers in radius.inbound.items():
@@ -156,11 +170,12 @@ def to_html(radius: BlastRadius) -> str:
     d = to_dict(radius)
     seed = _seed_label(radius)
     rows = "\n".join(
-        f"<tr class='{'hot' if a['is_hotspot'] else ''}'><td><code>{a['fqn']}</code></td>"
-        f"<td><code>{a['file_path']}</code></td><td>{a['depth']}</td>"
+        f"<tr class='{'hot' if a['is_hotspot'] else ''}'><td><code>{html.escape(a['fqn'])}</code></td>"
+        f"<td><code>{html.escape(a['file_path'])}</code></td><td>{a['depth']}</td>"
         f"<td>{a['fan_in']}</td><td>{'✅' if a['covered_by_test'] else '—'}</td></tr>"
         for a in d["affected"]
     )
+    seed = html.escape(seed)
     return f"""<!doctype html>
 <html><head><meta charset="utf-8"><title>Shockwave — {seed}</title>
 <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>

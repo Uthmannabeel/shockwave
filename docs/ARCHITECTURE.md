@@ -16,9 +16,11 @@ cli.py ──▶ blast_radius.compute() ──▶ orbit_client (Local | Remote)
         report.to_markdown / to_mermaid / to_html / to_json
 ```
 
-- **`orbit_client.py`** — `LocalBackend` shells `orbit sql`; `RemoteBackend` POSTs the JSON DSL to `/api/v4/orbit/query`. Both return `list[dict]`.
-- **`blast_radius.py`** — resolves a seed to `gl_definition` ids, then a DuckDB `WITH RECURSIVE` traversal of **inbound** edges in `gl_edge` (`CALLS`, `IMPORTS`, `EXTENDS`), bounded by `max_hops`, with a depth column as a cycle guard. Cross-file calls (`Definition --CALLS--> ImportedSymbol`) are bridged back to the concrete definition **by name** (`identifier_name` ↔ `name`), since Orbit Local has no `ImportedSymbol → Definition` edge.
-- **`risk.py`** — fan-in + depth + test-coverage → score; surfaces high-impact untested call sites.
+- **`orbit_client.py`** — `LocalBackend` shells `orbit sql`; `RemoteBackend` POSTs the JSON traversal DSL to `/api/v4/orbit/query` (anchored, one hop at a time). Local returns `list[dict]`; Remote returns nodes+edges per hop.
+- **`blast_radius.py`** — resolves a seed to `gl_definition` ids, then walks **inbound** edges (`CALLS`, `EXTENDS`) in Python — a cycle-safe BFS bounded by `max_hops`. *Local:* pulls the full edge set (one `gl_edge` query) and walks it in memory; cross-file calls (`Definition --CALLS--> ImportedSymbol`) are bridged back to the concrete definition by name, disambiguated by `import_path`. *Remote:* expands one anchored traversal per hop (Remote already resolves cross-file calls to direct `Definition→Definition` edges, so it's exact, no bridge).
+- **`risk.py`** — fan-in + depth + direct-test flag → score; surfaces high fan-in call sites with no direct test.
+- **`stubs.py`** — generates a pytest skeleton for each not-directly-tested hotspot.
+- **`ci_bot.py`** — GitLab CI bot: posts/updates the blast-radius review on a merge request (Orbit Remote).
 - **`report.py`** — Markdown / Mermaid / HTML / JSON renderers.
 - **`schema.py`** — single source of truth for all table/column/edge-kind names (so a schema change is a one-file edit).
 

@@ -2,7 +2,7 @@
 
 **See the blast radius of a code change before it merges.**
 
-Shockwave is a blast-radius impact-analysis tool built on the [GitLab Orbit](https://about.gitlab.com/gitlab-orbit/) knowledge graph. Point it at a changed function, file, or git diff and it traverses Orbit's resolved code graph — calls, imports, and inheritance — to show you *everything* a change can ripple into: every caller, the tests that should re-run, and the highest-risk **untested** call sites, ranked.
+Shockwave is a blast-radius impact-analysis tool built on the [GitLab Orbit](https://about.gitlab.com/gitlab-orbit/) knowledge graph. Point it at a changed function, file, or git diff and it traverses Orbit's resolved code graph — calls, imports, and inheritance — to show you *everything* a change can ripple into: every caller, the tests that should re-run, and the highest-risk call sites **that no test touches directly**, ranked.
 
 > Built for the **GitLab Transcend Hackathon** (Showcase track).
 >
@@ -19,18 +19,19 @@ Reviewers approve changes blind to ripple effects. `grep` can't follow a resolve
 - **`shockwave analyze <symbol|file>`** — transitive inbound impact set (callers → callers-of-callers …), ranked by risk.
 - **`shockwave diff <gitref>`** — blast radius of every symbol changed in a diff. The reviewer's killer feature.
 - **Reports** — ranked Markdown, a Mermaid graph, and a self-contained HTML view.
-- **Risk scoring** — flags high-impact, **untested** call sites.
-- **AI Catalog agent** — ask *"what's the blast radius of `process_payment`?"* in GitLab Duo (uses Orbit Remote's `query_graph`).
+- **Risk scoring** — flags high fan-in call sites with **no direct test**, and generates pytest stubs for them.
+- **MR bot** — a GitLab CI job that auto-posts the blast-radius review on every merge request ([`.gitlab-ci.yml`](.gitlab-ci.yml) + [`shockwave/ci_bot.py`](shockwave/ci_bot.py)).
+- **AI Catalog agent** — ask *"what's the blast radius of `<symbol>`?"* in GitLab Duo (uses Orbit Remote's `query_graph`).
 
 ## How it works
 
 ```
 seed symbol/file ─▶ resolve to gl_definition ─▶ transitive inbound closure
-                    over gl_code_edge (calls + imports↔ImportedSymbol + extends)
-                    ─▶ risk score + test-coverage flag ─▶ report / graph
+                    over gl_edge (CALLS + cross-file via ImportedSymbol + EXTENDS)
+                    ─▶ risk score + direct-test flag ─▶ report / graph
 ```
 
-Orbit Local indexes a repo into a DuckDB graph (`~/.orbit/graph.duckdb`); Shockwave runs `WITH RECURSIVE` traversals against it via `orbit sql`. The same logic ships as a GitLab Duo agent for Orbit Remote.
+Orbit Local indexes a repo into a DuckDB graph (`~/.orbit/graph.duckdb`); Shockwave pulls the call/import edges via `orbit sql` and walks them in Python (cycle-safe BFS). Against **Orbit Remote** it does the same walk over the REST query API (`shockwave analyze --remote`), which the MR bot and AI Catalog agent use.
 
 See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
@@ -45,9 +46,9 @@ $ shockwave analyze setupmethod --max-hops 4
 # ⚡ Blast radius: `src.flask.sansio.scaffold.setupmethod`
 
 **114** definitions across **10** files depend on this change.
- 🔥 **7** high-impact **untested** hotspot(s) need review.
+ 🔥 **7** high-impact hotspot(s) with **no direct test** need review.
 
-## 🔥 Untested hotspots (review first)
+## 🔥 Hotspots with no direct test (review first)
 | Definition                                   | File                           | Depth | Fan-in | Risk |
 | -------------------------------------------- | ------------------------------ | ----: | -----: | ---: |
 | `Blueprint.record_once`                      | src/flask/sansio/blueprints.py |     1 |     10 | 20.0 |

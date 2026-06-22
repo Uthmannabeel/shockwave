@@ -1,6 +1,6 @@
 """Algorithm tests on a hand-built fixture graph (no Orbit needed)."""
 
-from shockwave import blast_radius, report, risk
+from shockwave import blast_radius, report, risk, stubs
 
 
 # Fixture: caller depends on callee.  Includes a cycle (6<->7), a test-file
@@ -78,3 +78,98 @@ def test_markdown_and_json_render():
     import json
     data = json.loads(report.to_json(r))
     assert data["summary"]["affected_definitions"] == 7
+
+
+def test_stubs_for_hotspots():
+    r = blast_radius.compute(FakeBackend(), "process_payment", max_hops=5)
+    suggestions = stubs.suggest(r)
+    assert [s.fqn for s in suggestions] == ["checkout"]
+    code = suggestions[0].code
+    assert "def test_checkout_impact" in code
+    assert "from app.checkout import checkout" in code  # module path derived from file
+
+
+def test_clean_path_strips_only_dot_slash_prefix():
+    assert blast_radius._clean_path("./a/b.py") == "a/b.py"
+    assert blast_radius._clean_path("a\\b.py") == "a/b.py"
+    # must NOT strip leading characters that merely happen to be '.' or '/'
+    assert blast_radius._clean_path(".config/app.py") == ".config/app.py"
+
+
+def test_mermaid_and_html_escape_special_chars():
+    defs = [{"id": 1, "name": "op<T>", "fqn": 'ns::op"x"', "file_path": "a.cpp", "definition_type": "function"},
+            {"id": 2, "name": "caller|bad", "fqn": "caller|bad", "file_path": "b.cpp", "definition_type": "function"}]
+    impacts = [(1, 2)]
+
+    class FB:
+        def sql(self, q):
+            return ([{"callee": c, "caller": k} for c, k in impacts]
+                    if "UNION ALL" in q else defs)
+
+    r = blast_radius.compute(FB(), "op<T>", max_hops=3)
+    merm = report.to_mermaid(r)
+    assert '"op<T>"' not in merm and '["' in merm  # angle brackets were escaped
+    html = report.to_html(r)
+    assert "op&lt;T&gt;" in html or "op<T>" not in html  # html-escaped in the table
+
+
+# ----- remote backend (iterative anchored BFS) -----
+
+R_NODES = {
+    1: {"id": 1, "name": "compute", "fqn": "pkg.compute", "file_path": "pkg/core.py", "definition_type": "function"},
+    2: {"id": 2, "name": "service", "fqn": "pkg.service", "file_path": "pkg/service.py", "definition_type": "function"},
+    3: {"id": 3, "name": "handler", "fqn": "pkg.handler", "file_path": "pkg/api.py", "definition_type": "function"},
+    9: {"id": 9, "name": "worker_a", "fqn": "pkg.worker_a", "file_path": "pkg/worker.py", "definition_type": "function"},
+    10: {"id": 10, "name": "worker_b", "fqn": "pkg.worker_b", "file_path": "pkg/worker.py", "definition_type": "function"},
+}
+# (caller, callee): caller depends on callee
+R_EDGES = [(2, 1), (3, 2), (9, 3), (10, 3)]
+
+
+class FakeRemoteBackend:
+    def __init__(self, nodes, edges):
+        self.nodes, self.edges = nodes, edges
+
+    def _result(self, callee_ids):
+        callee_ids = set(callee_ids)
+        es = [(c, k) for (c, k) in self.edges if k in callee_ids]
+        ids = set(callee_ids) | {c for c, _ in es} | {k for _, k in es}
+        return {i: self.nodes[i] for i in ids if i in self.nodes}, es
+
+    def callers_by_filter(self, filters):
+        if "name" in filters:
+            ids = {i for i, n in self.nodes.items() if n["name"] == filters["name"]}
+        else:
+            ids = {i for i, n in self.nodes.items() if n["file_path"] == filters["file_path"]}
+        return self._result(ids)
+
+    def callers_by_ids(self, ids):
+        return self._result({int(i) for i in ids})
+
+
+def test_remote_affected_and_depths():
+    b = FakeRemoteBackend(R_NODES, R_EDGES)
+    r = blast_radius.compute_remote(b, "compute", max_hops=5)
+    assert r.seed_ids == [1]
+    depth = {a.meta.id: a.depth for a in r.affected}
+    assert depth == {2: 1, 3: 2, 9: 3, 10: 3}
+
+
+def test_remote_fan_in_complete_at_boundary():
+    # With max_hops=2, handler(3) is discovered at the last hop and never
+    # expanded in the loop; the boundary pass must still complete its fan-in
+    # (callers 9 and 10) without adding them as affected.
+    b = FakeRemoteBackend(R_NODES, R_EDGES)
+    r = blast_radius.compute_remote(b, "compute", max_hops=2)
+    ids = {a.meta.id for a in r.affected}
+    assert ids == {2, 3}  # 9,10 are beyond max_hops, not affected
+    ranked = {x.fqn: x for x in risk.score(r)}
+    assert ranked["pkg.handler"].fan_in == 2  # completed by the boundary query
+    assert ranked["pkg.handler"].is_hotspot  # high fan-in, no direct test
+
+
+def test_remote_file_seed():
+    b = FakeRemoteBackend(R_NODES, R_EDGES)
+    r = blast_radius.compute_remote(b, "pkg/core.py", max_hops=2)
+    assert r.seed_ids == [1]
+    assert {a.meta.id for a in r.affected} == {2, 3}

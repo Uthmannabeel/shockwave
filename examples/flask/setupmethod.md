@@ -1,9 +1,11 @@
 # ⚡ Blast radius: `src.flask.sansio.scaffold.setupmethod`
 
 **114** definitions across **10** files depend on this change.
- 🔥 **7** high-impact **untested** hotspot(s) need review.
+ 🔥 **7** high-impact hotspot(s) with **no direct test** need review.
 
-## 🔥 Untested hotspots (review first)
+## 🔥 Hotspots with no direct test (review first)
+
+_High fan-in definitions in non-test code that no test calls directly._
 
 | Definition | File | Depth | Fan-in | Risk |
 | --- | --- | --: | --: | --: |
@@ -15,17 +17,131 @@
 | `src.flask.sansio.blueprints.Blueprint.add_app_template_global` | `src/flask/sansio/blueprints.py` | 1 | 2 | 4.0 |
 | `src.flask.sansio.blueprints.Blueprint.record` | `src/flask/sansio/blueprints.py` | 1 | 2 | 4.0 |
 
+## 🧪 Suggested tests (pin the contract before you change it)
+
+<details><summary><code>src.flask.sansio.blueprints.Blueprint.record_once</code></summary>
+
+```python
+def test_record_once_impact():
+    """Cover src.flask.sansio.blueprints.Blueprint.record_once.
+
+    Flagged by Shockwave: 10 dependents, no test calls it directly,
+    depth 1 in the blast radius. Changing it could break callers silently.
+    """
+    from src.flask.sansio.blueprints import record_once  # noqa: import inside test for the stub
+    # TODO: arrange inputs, call record_once(...), and assert the behavior
+    # callers depend on the current contract — pin it here first.
+    raise NotImplementedError
+```
+</details>
+
+<details><summary><code>src.flask.sansio.scaffold.Scaffold._method_route</code></summary>
+
+```python
+def test__method_route_impact():
+    """Cover src.flask.sansio.scaffold.Scaffold._method_route.
+
+    Flagged by Shockwave: 5 dependents, no test calls it directly,
+    depth 2 in the blast radius. Changing it could break callers silently.
+    """
+    from src.flask.sansio.scaffold import _method_route  # noqa: import inside test for the stub
+    # TODO: arrange inputs, call _method_route(...), and assert the behavior
+    # callers depend on the current contract — pin it here first.
+    raise NotImplementedError
+```
+</details>
+
+<details><summary><code>src.flask.sansio.app.App.add_template_filter</code></summary>
+
+```python
+def test_add_template_filter_impact():
+    """Cover src.flask.sansio.app.App.add_template_filter.
+
+    Flagged by Shockwave: 2 dependents, no test calls it directly,
+    depth 1 in the blast radius. Changing it could break callers silently.
+    """
+    from src.flask.sansio.app import add_template_filter  # noqa: import inside test for the stub
+    # TODO: arrange inputs, call add_template_filter(...), and assert the behavior
+    # callers depend on the current contract — pin it here first.
+    raise NotImplementedError
+```
+</details>
+
+<details><summary><code>src.flask.sansio.app.App.add_template_global</code></summary>
+
+```python
+def test_add_template_global_impact():
+    """Cover src.flask.sansio.app.App.add_template_global.
+
+    Flagged by Shockwave: 2 dependents, no test calls it directly,
+    depth 1 in the blast radius. Changing it could break callers silently.
+    """
+    from src.flask.sansio.app import add_template_global  # noqa: import inside test for the stub
+    # TODO: arrange inputs, call add_template_global(...), and assert the behavior
+    # callers depend on the current contract — pin it here first.
+    raise NotImplementedError
+```
+</details>
+
+<details><summary><code>src.flask.sansio.app.App.add_template_test</code></summary>
+
+```python
+def test_add_template_test_impact():
+    """Cover src.flask.sansio.app.App.add_template_test.
+
+    Flagged by Shockwave: 2 dependents, no test calls it directly,
+    depth 1 in the blast radius. Changing it could break callers silently.
+    """
+    from src.flask.sansio.app import add_template_test  # noqa: import inside test for the stub
+    # TODO: arrange inputs, call add_template_test(...), and assert the behavior
+    # callers depend on the current contract — pin it here first.
+    raise NotImplementedError
+```
+</details>
+
+<details><summary><code>src.flask.sansio.blueprints.Blueprint.add_app_template_global</code></summary>
+
+```python
+def test_add_app_template_global_impact():
+    """Cover src.flask.sansio.blueprints.Blueprint.add_app_template_global.
+
+    Flagged by Shockwave: 2 dependents, no test calls it directly,
+    depth 1 in the blast radius. Changing it could break callers silently.
+    """
+    from src.flask.sansio.blueprints import add_app_template_global  # noqa: import inside test for the stub
+    # TODO: arrange inputs, call add_app_template_global(...), and assert the behavior
+    # callers depend on the current contract — pin it here first.
+    raise NotImplementedError
+```
+</details>
+
+<details><summary><code>src.flask.sansio.blueprints.Blueprint.record</code></summary>
+
+```python
+def test_record_impact():
+    """Cover src.flask.sansio.blueprints.Blueprint.record.
+
+    Flagged by Shockwave: 2 dependents, no test calls it directly,
+    depth 1 in the blast radius. Changing it could break callers silently.
+    """
+    from src.flask.sansio.blueprints import record  # noqa: import inside test for the stub
+    # TODO: arrange inputs, call record(...), and assert the behavior
+    # callers depend on the current contract — pin it here first.
+    raise NotImplementedError
+```
+</details>
+
 ## Affected definitions by file
 
 ### `src/flask/app.py`
 
-| Definition | Type | Depth | Fan-in | Tested |
+| Definition | Type | Depth | Fan-in | Direct test |
 | --- | --- | --: | --: | :-: |
 | `__init__` | Method | 2 | 0 | — |
 
 ### `src/flask/sansio/app.py`
 
-| Definition | Type | Depth | Fan-in | Tested |
+| Definition | Type | Depth | Fan-in | Direct test |
 | --- | --- | --: | --: | :-: |
 | `add_template_filter` | DecoratedMethod | 1 | 2 | — |
 | `add_template_global` | DecoratedMethod | 1 | 2 | — |
@@ -43,7 +159,7 @@
 
 ### `src/flask/sansio/blueprints.py`
 
-| Definition | Type | Depth | Fan-in | Tested |
+| Definition | Type | Depth | Fan-in | Direct test |
 | --- | --- | --: | --: | :-: |
 | `add_app_template_filter` | DecoratedMethod | 1 | 6 | ✅ |
 | `add_app_template_global` | DecoratedMethod | 1 | 2 | — |
@@ -71,7 +187,7 @@
 
 ### `src/flask/sansio/scaffold.py`
 
-| Definition | Type | Depth | Fan-in | Tested |
+| Definition | Type | Depth | Fan-in | Direct test |
 | --- | --- | --: | --: | :-: |
 | `add_url_rule` | DecoratedMethod | 1 | 1 | — |
 | `after_request` | DecoratedMethod | 1 | 2 | ✅ |
@@ -95,7 +211,7 @@
 
 ### `tests/test_basic.py` *(tests)*
 
-| Definition | Type | Depth | Fan-in | Tested |
+| Definition | Type | Depth | Fan-in | Direct test |
 | --- | --- | --: | --: | :-: |
 | `test_inject_blueprint_url_defaults` | Function | 2 | 0 | ✅ |
 | `test_response_type_errors` | Function | 2 | 0 | ✅ |
@@ -109,7 +225,7 @@
 
 ### `tests/test_blueprints.py` *(tests)*
 
-| Definition | Type | Depth | Fan-in | Tested |
+| Definition | Type | Depth | Fan-in | Direct test |
 | --- | --- | --: | --: | :-: |
 | `test_add_template_filter` | Function | 2 | 0 | ✅ |
 | `test_add_template_filter_with_name` | Function | 2 | 0 | ✅ |
@@ -155,13 +271,13 @@
 
 ### `tests/test_session_interface.py` *(tests)*
 
-| Definition | Type | Depth | Fan-in | Tested |
+| Definition | Type | Depth | Fan-in | Direct test |
 | --- | --- | --: | --: | :-: |
 | `test_open_session_with_endpoint` | Function | 2 | 0 | ✅ |
 
 ### `tests/test_signals.py` *(tests)*
 
-| Definition | Type | Depth | Fan-in | Tested |
+| Definition | Type | Depth | Fan-in | Direct test |
 | --- | --- | --: | --: | :-: |
 | `test_before_render_template` | Function | 2 | 0 | ✅ |
 | `test_request_exception_signal` | Function | 2 | 0 | ✅ |
@@ -169,14 +285,14 @@
 
 ### `tests/test_testing.py` *(tests)*
 
-| Definition | Type | Depth | Fan-in | Tested |
+| Definition | Type | Depth | Fan-in | Direct test |
 | --- | --- | --: | --: | :-: |
 | `test_blueprint_with_subdomain` | Function | 2 | 0 | ✅ |
 | `test_subdomain` | Function | 2 | 0 | ✅ |
 
 ### `tests/test_user_error_handler.py` *(tests)*
 
-| Definition | Type | Depth | Fan-in | Tested |
+| Definition | Type | Depth | Fan-in | Direct test |
 | --- | --- | --: | --: | :-: |
 | `test_default_error_handler` | Function | 2 | 0 | ✅ |
 | `test_error_handler_blueprint` | Function | 2 | 0 | ✅ |

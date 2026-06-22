@@ -50,15 +50,20 @@ prompts:
 
         Procedure:
         1. Call get_graph_schema if unsure which entities/edges are available.
-        2. Identify the definitions (functions/classes) changed by the MR.
-        3. With query_graph, traverse INBOUND code relationships (calls, imports,
-           extends) transitively from each changed definition to find every
-           affected definition and file. Keep depth sensible (about 5 hops).
+        2. Identify the files (and their definitions) changed by the MR.
+        3. With query_graph, find who transitively DEPENDS ON the changed
+           definitions (their inbound callers). Use traversal queries anchored by
+           `filters` or `node_ids` (Orbit rejects full scans): anchor the callee
+           by {"file_path": ...} or {"name": ...}, with a `caller` Definition node
+           and a {"type":"CALLS","from":"caller","to":"callee"} relationship; also
+           follow EXTENDS. Expand outward hop by hop using the previous hop's
+           caller ids as {"node_ids":[...]} (about 5 hops). Orbit already resolves
+           cross-file calls to direct Definition->Definition edges.
         4. Treat affected definitions in non-test files (no test/spec markers in
-           the path) that nothing tests as higher-risk "hotspots".
+           the path) that no test calls directly as higher-risk "hotspots".
         5. Post one MR comment via create_merge_request_note containing:
            - a one-line summary (N definitions across M files affected),
-           - a "Review first" list of untested hotspots (definition + file),
+           - a "Review first" list of hotspots with no direct test (definition + file),
            - the affected definitions grouped by file.
         Only report what the graph returns. Never invent callers or files.
       user: |

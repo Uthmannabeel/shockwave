@@ -11,7 +11,10 @@ is cycle-safe, easy to unit-test with a fake backend, and fast at repo scale.
 Impact edges (``caller`` depends on ``callee``) come from:
   * ``Definition --CALLS/EXTENDS--> Definition`` (same-graph), and
   * cross-file calls ``Definition --CALLS--> ImportedSymbol`` bridged back to the
-    concrete definition by name (Orbit Local has no ImportedSymbol->Definition edge).
+    concrete definition by name (Orbit Local has no ImportedSymbol->Definition
+    edge), disambiguated by ``import_path`` so same-named symbols in different
+    modules don't collide. (Orbit *Remote* resolves these to direct edges, so
+    ``compute_remote`` needs no bridge and is exact.)
 """
 
 from __future__ import annotations
@@ -84,10 +87,22 @@ def _impacts_query() -> str:
         f"AND e.{s.EDGE_SOURCE_KIND} = '{s.KIND_DEFINITION}' "
         f"AND e.{s.EDGE_TARGET_KIND} = '{s.KIND_DEFINITION}'"
     )
+    # Cross-file calls appear as Definition --CALLS--> ImportedSymbol; Orbit Local
+    # has no ImportedSymbol->Definition edge, so we bridge by name. To avoid
+    # collisions between same-named definitions in different modules (e.g. many
+    # `get`/`__init__`), we additionally require the import_path to be consistent
+    # with the callee's module: either the dotted file path contains the
+    # import_path, or the import_path mentions the callee's file basename. When
+    # import_path is absent we fall back to the (looser) name match.
+    basename = "regexp_replace(d.file_path, '(^.*/)|(\\.[^.]+$)', '', 'g')"
+    dotted = "replace(d.file_path, '/', '.')"
     via_import = (
         f"SELECT d.{s.DEF_ID} AS callee, e.{s.EDGE_SOURCE} AS caller "
         f"FROM {s.IMPORTED_SYMBOL} sym "
         f"JOIN {s.DEFINITION} d ON d.{s.DEF_NAME} = sym.{s.IMP_IDENTIFIER} "
+        f"AND (sym.{s.IMP_PATH} IS NULL OR sym.{s.IMP_PATH} = '' "
+        f"OR {dotted} LIKE '%' || sym.{s.IMP_PATH} || '%' "
+        f"OR sym.{s.IMP_PATH} LIKE '%' || {basename} || '%') "
         f"JOIN {s.EDGE} e ON e.{s.EDGE_TARGET} = sym.{s.DEF_ID} "
         f"WHERE e.{s.EDGE_KIND} = '{s.CALLS}' "
         f"AND e.{s.EDGE_TARGET_KIND} = '{s.KIND_IMPORTED_SYMBOL}' "
@@ -125,8 +140,16 @@ def fetch_inbound(backend: OrbitBackend) -> dict[int, set[int]]:
 
 # --- seed resolution -----------------------------------------------------------
 
+def _clean_path(path: str) -> str:
+    """Forward slashes; strip leading ``./`` segments (not arbitrary chars)."""
+    p = path.replace("\\", "/")
+    while p.startswith("./"):
+        p = p[2:]
+    return p
+
+
 def _norm(path: str) -> str:
-    return path.replace("\\", "/").lstrip("./").lower()
+    return _clean_path(path).lower()
 
 
 def resolve_seed(seed: str, defs: dict[int, DefMeta]) -> list[DefMeta]:
@@ -229,7 +252,7 @@ def compute_remote(backend, seed: str, max_hops: int = 5) -> BlastRadius:
     looks_like_path = ("/" in seed) or ("\\" in seed) or os.path.splitext(seed)[1] != ""
     if looks_like_path:
         # Orbit stores file_path with original case and forward slashes.
-        anchor = {"file_path": seed.replace("\\", "/").lstrip("./")}
+        anchor = {"file_path": _clean_path(seed)}
     else:
         anchor = {"name": seed.split(".")[-1]}
 
@@ -272,6 +295,13 @@ def compute_remote(backend, seed: str, max_hops: int = 5) -> BlastRadius:
             nxt.add(caller)
         frontier = nxt
         d += 1
+
+    # Boundary nodes discovered at the last hop were never expanded, so their
+    # inbound (used for fan-in / hotspot detection) is empty. One extra anchored
+    # query over all affected ids completes the fan-in counts accurately.
+    if depth:
+        nodes, edges = backend.callers_by_ids(list(depth.keys()))
+        ingest(nodes, edges)
 
     affected = [AffectedNode(meta=defs[i], depth=dep) for i, dep in depth.items() if i in defs]
     affected.sort(key=lambda a: (a.depth, a.file_path, a.fqn))

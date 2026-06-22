@@ -1,8 +1,8 @@
 """Suggest test stubs for the untested hotspots in a blast radius.
 
-Shockwave doesn't just flag risk — for every high-impact definition that nothing
-tests, it emits a ready-to-fill pytest skeleton so you know exactly what to
-cover before shipping a change.
+Shockwave doesn't just flag risk — for every high-impact definition that no test
+calls directly, it emits a ready-to-fill pytest skeleton so you know exactly what
+to cover before shipping a change.
 """
 
 from __future__ import annotations
@@ -41,7 +41,7 @@ def stub_for(node) -> Stub:
     code = (
         f"def {test_fn}():\n"
         f'    """Cover {node.fqn or leaf}.\n\n'
-        f"    Flagged by Shockwave: {node.fan_in} dependents, no test coverage,\n"
+        f"    Flagged by Shockwave: {node.fan_in} dependents, no test calls it directly,\n"
         f"    depth {node.depth} in the blast radius. Changing it could break callers silently.\n"
         f'    """\n'
         f"    from {mod} import {leaf}  # noqa: import inside test for the stub\n"
@@ -53,5 +53,5 @@ def stub_for(node) -> Stub:
 
 
 def suggest(radius: BlastRadius) -> list[Stub]:
-    """One pytest stub per untested hotspot, highest risk first."""
+    """One pytest stub per not-directly-tested hotspot, highest risk first."""
     return [stub_for(h) for h in risk_mod.hotspots(radius)]

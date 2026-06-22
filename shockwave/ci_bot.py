@@ -23,7 +23,10 @@ CODE_EXTENSIONS = (
     ".rs", ".c", ".cc", ".cpp", ".h", ".hpp", ".cs", ".php",
 )
 
-HEADER = "## 🤖⚡ Shockwave — blast-radius review\n\n"
+# Hidden marker so re-runs update the same comment instead of duplicating it.
+MARKER = "<!-- shockwave-blast-radius -->"
+HEADER = f"{MARKER}\n## 🤖⚡ Shockwave — blast-radius review\n\n"
+MAX_BODY = 60_000  # keep comments well under GitLab's note limit
 FOOTER = (
     "\n\n---\n*Computed from the [GitLab Orbit](https://about.gitlab.com/gitlab-orbit/) "
     "knowledge graph by [Shockwave](https://github.com/Uthmannabeel/shockwave). "
@@ -55,11 +58,27 @@ def _changed_files(api: str, token: str, project_id: str, mr_iid: str) -> list[s
     return files
 
 
-def _post_note(api: str, token: str, project_id: str, mr_iid: str, body: str) -> None:
+def _upsert_note(api: str, token: str, project_id: str, mr_iid: str, body: str) -> None:
+    """Update Shockwave's existing comment if present, else create one."""
     import requests
 
-    url = f"{api}/projects/{project_id}/merge_requests/{mr_iid}/notes"
-    resp = requests.post(url, headers={"PRIVATE-TOKEN": token}, json={"body": body}, timeout=30)
+    headers = {"PRIVATE-TOKEN": token}
+    base = f"{api}/projects/{project_id}/merge_requests/{mr_iid}/notes"
+    existing_id = None
+    try:
+        resp = requests.get(f"{base}?per_page=100", headers=headers, timeout=30)
+        if resp.status_code == 200:
+            for note in resp.json():
+                if MARKER in (note.get("body") or ""):
+                    existing_id = note["id"]
+                    break
+    except requests.RequestException:
+        pass  # fall through to create
+
+    if existing_id is not None:
+        resp = requests.put(f"{base}/{existing_id}", headers=headers, json={"body": body}, timeout=30)
+    else:
+        resp = requests.post(base, headers=headers, json={"body": body}, timeout=30)
     if resp.status_code not in (200, 201):
         raise OrbitError(f"could not post MR note (HTTP {resp.status_code}): {resp.text}")
 
@@ -91,7 +110,10 @@ def main(argv: list[str] | None = None) -> int:
         else:
             body = HEADER + report.to_markdown(radius) + FOOTER
 
-        _post_note(api, token, project_id, mr_iid, body)
+        if len(body) > MAX_BODY:
+            body = body[:MAX_BODY] + "\n\n*…report truncated.*" + FOOTER
+
+        _upsert_note(api, token, project_id, mr_iid, body)
         print(f"Shockwave: posted blast-radius review ({len(radius.affected)} affected).")
         return 0
     except OrbitError as exc:

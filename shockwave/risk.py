@@ -2,8 +2,12 @@
 
 A node's risk grows with how many things depend on it (fan-in) and how close it
 is to the seed (a directly-affected node is scarier than a 4-hop-away one), and
-is amplified when nothing *tests* it. The headline output is the set of
-high-impact, untested definitions a reviewer should look at first.
+is amplified when no test calls it directly. The headline output is the set of
+high-impact definitions with no direct test that a reviewer should look at first.
+
+Note: "no direct test" means no test file calls the definition *directly* — it
+may still be exercised transitively. That's a deliberately conservative signal:
+a function many things depend on but nothing tests directly is fragile.
 """
 
 from __future__ import annotations
@@ -32,7 +36,7 @@ class RiskedNode:
 
     @property
     def is_hotspot(self) -> bool:
-        """High-impact, untested, non-test code — review this first."""
+        """High fan-in, non-test code that no test calls directly — review first."""
         return (not self.covered_by_test) and (not is_test_path(self.file_path)) and self.fan_in >= 2
 
 
