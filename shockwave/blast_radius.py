@@ -60,10 +60,26 @@ class BlastRadius:
     # graph context used by risk scoring / reporting
     defs_by_id: dict[int, DefMeta] = field(default_factory=dict)
     inbound: dict[int, set[int]] = field(default_factory=dict)  # callee -> {callers}
+    # parents[caller] = the node it was first discovered from on the path toward
+    # the seed (i.e. caller depends on parents[caller]). Lets us reconstruct a
+    # call path from any affected node back to a seed.
+    parents: dict[int, int] = field(default_factory=dict)
 
     @property
     def affected_files(self) -> set[str]:
         return {a.file_path for a in self.affected}
+
+    def path_to_seed(self, node_id: int) -> list[int]:
+        """Call path from ``node_id`` down to a seed (inclusive of both)."""
+        path = [node_id]
+        seen = {node_id}
+        while node_id in self.parents:
+            node_id = self.parents[node_id]
+            if node_id in seen:
+                break
+            path.append(node_id)
+            seen.add(node_id)
+        return path
 
 
 # --- SQL builders (names sourced from schema.py) -------------------------------
@@ -182,6 +198,7 @@ def _walk(
 ) -> BlastRadius:
     seed_ids = [d.id for d in seeds_meta]
     depth_by_id: dict[int, int] = {}
+    parents: dict[int, int] = {}
     seed_set = set(seed_ids)
     queue: deque[tuple[int, int]] = deque((sid, 0) for sid in seed_ids)
     visited: set[int] = set(seed_ids)
@@ -199,6 +216,7 @@ def _walk(
                 depth_by_id[caller] = new_depth
             if caller not in visited:
                 visited.add(caller)
+                parents[caller] = node
                 queue.append((caller, new_depth))
 
     affected = [
@@ -214,6 +232,7 @@ def _walk(
         affected=affected,
         defs_by_id=defs,
         inbound=inbound,
+        parents=parents,
     )
 
 
@@ -274,11 +293,13 @@ def compute_remote(backend, seed: str, max_hops: int = 5) -> BlastRadius:
         seed_ids = {callee for _, callee in edges if callee in defs and _seed_matches(defs[callee], seed)}
 
     depth: dict[int, int] = {}
+    parents: dict[int, int] = {}
     visited = set(seed_ids)
     frontier: set[int] = set()
     for caller, callee in edges:
         if callee in seed_ids and caller not in visited:
             depth[caller] = 1
+            parents[caller] = callee
             visited.add(caller)
             frontier.add(caller)
 
@@ -291,6 +312,7 @@ def compute_remote(backend, seed: str, max_hops: int = 5) -> BlastRadius:
             if caller in visited or caller in seed_ids:
                 continue
             depth[caller] = d + 1
+            parents[caller] = callee
             visited.add(caller)
             nxt.add(caller)
         frontier = nxt
@@ -312,6 +334,7 @@ def compute_remote(backend, seed: str, max_hops: int = 5) -> BlastRadius:
         affected=affected,
         defs_by_id=defs,
         inbound=inbound,
+        parents=parents,
     )
 
 
@@ -320,12 +343,15 @@ def compute_for_files_remote(backend, files: list[str], max_hops: int = 5) -> Bl
     defs: dict[int, DefMeta] = {}
     inbound: dict[int, set[int]] = {}
     depth: dict[int, int] = {}
+    parents: dict[int, int] = {}
     seed_ids: set[int] = set()
     for f in files:
         br = compute_remote(backend, f, max_hops=max_hops)
         defs.update(br.defs_by_id)
         for callee, callers in br.inbound.items():
             inbound.setdefault(callee, set()).update(callers)
+        for k, v in br.parents.items():
+            parents.setdefault(k, v)
         seed_ids.update(br.seed_ids)
         for a in br.affected:
             if a.meta.id not in depth or a.depth < depth[a.meta.id]:
@@ -343,6 +369,7 @@ def compute_for_files_remote(backend, files: list[str], max_hops: int = 5) -> Bl
         affected=affected,
         defs_by_id=defs,
         inbound=inbound,
+        parents=parents,
     )
 
 

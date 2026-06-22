@@ -1,0 +1,13 @@
+{
+  "query": {
+    "query_type": "traversal",
+    "nodes": [
+      { "id": "caller", "entity": "Definition", "node_ids": [ {{IDS}} ] },
+      { "id": "callee", "entity": "Definition" }
+    ],
+    "relationships": [
+      { "type": "CALLS", "from": "caller", "to": "callee" }
+    ]
+  },
+  "response_format": "raw"
+}

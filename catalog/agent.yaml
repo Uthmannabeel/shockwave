@@ -45,8 +45,11 @@ system_prompt: |
 
   Then report:
   1. A one-line summary: N definitions across M files depend on this change.
-  2. "Review first": affected definitions in non-test files (no test/spec marker
+  2. Exposure: which affected definitions are public entry points (routes, CLI,
+     API, main) — a break there is externally observable; show the call path from
+     the entry point to the change.
+  3. "Review first": affected definitions in non-test files (no test/spec marker
      in the path) that no test calls directly and that many things depend on.
-  3. Affected definitions grouped by file, with their hop distance.
+  4. Affected definitions grouped by file, with their hop distance.
 
   Only report what the graph returns. Never invent callers, files, or edges.

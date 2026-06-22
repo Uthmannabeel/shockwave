@@ -18,6 +18,7 @@ Every reviewer has approved a one-line change that quietly broke something three
 ## What it does
 Point Shockwave at a function, file, or merge-request diff and it traverses Orbit's knowledge graph to compute the **transitive blast radius** — every definition that depends on the change, across files — and then:
 - **ranks by risk** (fan-in × proximity), and
+- runs **exposure analysis** — does the change's blast radius reach a **public entry point** (route / API / CLI / `main`)? If so a break is *externally observable*, not internal-only — and we show the exact **call path** from the entry point to the change. (This is the same *reachability* question security triage asks: "can the outside actually reach this code?")
 - **flags hotspots with no direct test** — high-impact code that no test calls directly, the stuff most likely to break silently, and
 - **generates a pytest stub** for each one, so you know exactly what to pin down first.
 
@@ -47,10 +48,24 @@ It ships in three forms:
 ## What we learned
 A knowledge graph changes review from *"I think this is safe"* to *"here is exactly what depends on it."* The hard part isn't the traversal — it's being honest about what the graph does and doesn't say.
 
+## Giving back to the ecosystem
+Orbit's traversal DSL is powerful but unforgiving — every query must be anchored,
+full scans are rejected, and cross-file calls are pre-resolved. We packaged the
+patterns we learned as a reusable **[Orbit Reachability skill](https://github.com/Uthmannabeel/shockwave/blob/main/skills/orbit-reachability/SKILL.md)**:
+the DSL rules, ready JSON recipes, and the hop-by-hop transitive-reachability
+algorithm. Any Duo agent or MCP client can now do correct graph reachability over
+Orbit — for code today, any entity/edge tomorrow — without re-learning the gotchas.
+
 ## What's next
+- **Security reachability triage** — the natural next step: rank vulnerabilities by
+  whether their code is *reachable from an entry point* and show the blast radius of
+  a fix. Orbit's graph doesn't yet carry a finding's code location (the `Finding`
+  node has no file/line, and there's no `Finding→Definition` edge), so this means
+  joining Orbit reachability with GitLab's Vulnerability API by location — exactly
+  the bridge Shockwave is built to be.
 - Line-level MR seeding (map diff hunks to the exact changed definitions).
 - More edge types (overrides, data-flow) and languages.
-- An IDE gutter that shows a symbol's blast radius as you type.
+- An IDE gutter that shows a symbol's blast radius + exposure as you type.
 
 ## Built with
 Python · GitLab Orbit (Local + Remote) · GitLab Duo AI Catalog · GitLab CI/CD · DuckDB · the Orbit query DSL · requests · truststore

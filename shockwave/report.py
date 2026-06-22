@@ -21,6 +21,7 @@ def _mlabel(text: str) -> str:
 from .blast_radius import BlastRadius
 from . import risk as risk_mod
 from . import stubs as stubs_mod
+from . import reach as reach_mod
 
 
 def _seed_label(radius: BlastRadius) -> str:
@@ -50,7 +51,26 @@ def to_markdown(radius: BlastRadius) -> str:
         lines.append(
             f" 🔥 **{len(hotspots)}** high-impact hotspot(s) with **no direct test** need review."
         )
+    entries = reach_mod.entry_points(radius)
+    if entries:
+        lines.append(
+            f" 🚪 Reachable from **{len(entries)}** public entry point(s) — a break here is "
+            f"**externally observable**."
+        )
     lines.append("")
+
+    if entries:
+        lines.append("## 🚪 Exposure — reachable from public surface")
+        lines.append("")
+        lines.append("_Call paths from an external entry point down to the change._")
+        lines.append("")
+        lines.append("| Entry point | Kind | Path to change |")
+        lines.append("| --- | --- | --- |")
+        for ep in entries[:12]:
+            lines.append(
+                f"| `{ep.meta.fqn or ep.meta.name}` | {ep.kind} | {reach_mod.path_str(ep)} |"
+            )
+        lines.append("")
 
     if hotspots:
         lines.append("## 🔥 Hotspots with no direct test (review first)")
@@ -138,7 +158,17 @@ def to_dict(radius: BlastRadius) -> dict:
             "affected_definitions": len(radius.affected),
             "affected_files": len(radius.affected_files),
             "hotspots": sum(1 for r in ranked if r.is_hotspot),
+            "entry_points": len(reach_mod.entry_points(radius)),
         },
+        "exposure": [
+            {
+                "entry_point": ep.meta.fqn or ep.meta.name,
+                "file_path": ep.meta.file_path,
+                "kind": ep.kind,
+                "path": [m.fqn or m.name for m in ep.path],
+            }
+            for ep in reach_mod.entry_points(radius)
+        ],
         "affected": [
             {
                 "fqn": r.fqn or r.name,

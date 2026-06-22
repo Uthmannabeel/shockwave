@@ -18,6 +18,7 @@ Reviewers approve changes blind to ripple effects. `grep` can't follow a resolve
 
 - **`shockwave analyze <symbol|file>`** — transitive inbound impact set (callers → callers-of-callers …), ranked by risk.
 - **`shockwave diff <gitref>`** — blast radius of every symbol changed in a diff. The reviewer's killer feature.
+- **Exposure analysis** — tells you whether the change is **reachable from a public entry point** (route / API / CLI / `main`), *with the call path* — so you know if a break is externally observable or internal-only. (The same reachability question security triage asks.)
 - **Reports** — ranked Markdown, a Mermaid graph, and a self-contained HTML view.
 - **Risk scoring** — flags high fan-in call sites with **no direct test**, and generates pytest stubs for them.
 - **MR bot** — a GitLab CI job that auto-posts the blast-radius review on every merge request ([`.gitlab-ci.yml`](.gitlab-ci.yml) + [`shockwave/ci_bot.py`](shockwave/ci_bot.py)).
@@ -47,6 +48,7 @@ $ shockwave analyze setupmethod --max-hops 4
 
 **114** definitions across **10** files depend on this change.
  🔥 **7** high-impact hotspot(s) with **no direct test** need review.
+ 🚪 Reachable from **21** public entry point(s) — incl. `Scaffold.route` (`Scaffold.route → setupmethod`).
 
 ## 🔥 Hotspots with no direct test (review first)
 | Definition                                   | File                           | Depth | Fan-in | Risk |
@@ -93,9 +95,18 @@ Example (live `gitlab.com` graph of this very repo):
   tests/test_blast_radius.py · test_depths, test_cycle_terminates, …
 ```
 
+## Reusable for the ecosystem
+
+Getting Orbit's traversal DSL right is non-obvious (every query must be anchored;
+no full scans; cross-file calls are pre-resolved). We packaged what we learned as
+a reusable **[Orbit Reachability skill](skills/orbit-reachability/SKILL.md)** —
+DSL rules + ready JSON recipes + the hop-by-hop transitive-reachability algorithm
+— so any Duo agent or MCP client can do correct graph reachability over Orbit
+(for code today, any entity/edge tomorrow) without re-learning the gotchas.
+
 ## Status
 
-🚧 Under active development for the hackathon. See the build plan and `docs/`.
+🚧 Built for the hackathon. See the build plan and `docs/`.
 
 ## License
 

@@ -1,6 +1,6 @@
 """Algorithm tests on a hand-built fixture graph (no Orbit needed)."""
 
-from shockwave import blast_radius, report, risk, stubs
+from shockwave import blast_radius, report, risk, stubs, reach
 
 
 # Fixture: caller depends on callee.  Includes a cycle (6<->7), a test-file
@@ -87,6 +87,18 @@ def test_stubs_for_hotspots():
     code = suggestions[0].code
     assert "def test_checkout_impact" in code
     assert "from app.checkout import checkout" in code  # module path derived from file
+
+
+def test_exposure_entry_points_and_path():
+    r = blast_radius.compute(FakeBackend(), "process_payment", max_hops=5)
+    eps = {e.meta.name: e for e in reach.entry_points(r)}
+    # api_handler is an outer surface node in app/api.py -> an 'api' entry point
+    assert "api_handler" in eps
+    assert eps["api_handler"].kind == "api"
+    # and we can trace the call path from it back to the changed symbol
+    assert [m.fqn for m in eps["api_handler"].path] == ["api_handler", "checkout", "process_payment"]
+    # helper_b is called by helper_a, so it is NOT an outer entry point
+    assert "helper_b" not in eps
 
 
 def test_clean_path_strips_only_dot_slash_prefix():

@@ -10,8 +10,210 @@
   "summary": {
     "affected_definitions": 114,
     "affected_files": 10,
-    "hotspots": 7
+    "hotspots": 7,
+    "entry_points": 21
   },
+  "exposure": [
+    {
+      "entry_point": "src.flask.sansio.scaffold.Scaffold.route",
+      "file_path": "src/flask/sansio/scaffold.py",
+      "kind": "route",
+      "path": [
+        "src.flask.sansio.scaffold.Scaffold.route",
+        "src.flask.sansio.scaffold.setupmethod"
+      ]
+    },
+    {
+      "entry_point": "src.flask.sansio.app.App.shell_context_processor",
+      "file_path": "src/flask/sansio/app.py",
+      "kind": "surface",
+      "path": [
+        "src.flask.sansio.app.App.shell_context_processor",
+        "src.flask.sansio.scaffold.setupmethod"
+      ]
+    },
+    {
+      "entry_point": "src.flask.sansio.app.App.teardown_appcontext",
+      "file_path": "src/flask/sansio/app.py",
+      "kind": "surface",
+      "path": [
+        "src.flask.sansio.app.App.teardown_appcontext",
+        "src.flask.sansio.scaffold.setupmethod"
+      ]
+    },
+    {
+      "entry_point": "src.flask.sansio.app.App.template_filter",
+      "file_path": "src/flask/sansio/app.py",
+      "kind": "surface",
+      "path": [
+        "src.flask.sansio.app.App.template_filter",
+        "src.flask.sansio.scaffold.setupmethod"
+      ]
+    },
+    {
+      "entry_point": "src.flask.sansio.app.App.template_global",
+      "file_path": "src/flask/sansio/app.py",
+      "kind": "surface",
+      "path": [
+        "src.flask.sansio.app.App.template_global",
+        "src.flask.sansio.scaffold.setupmethod"
+      ]
+    },
+    {
+      "entry_point": "src.flask.sansio.app.App.template_test",
+      "file_path": "src/flask/sansio/app.py",
+      "kind": "surface",
+      "path": [
+        "src.flask.sansio.app.App.template_test",
+        "src.flask.sansio.scaffold.setupmethod"
+      ]
+    },
+    {
+      "entry_point": "src.flask.sansio.scaffold.Scaffold.delete",
+      "file_path": "src/flask/sansio/scaffold.py",
+      "kind": "surface",
+      "path": [
+        "src.flask.sansio.scaffold.Scaffold.delete",
+        "src.flask.sansio.scaffold.setupmethod"
+      ]
+    },
+    {
+      "entry_point": "src.flask.sansio.scaffold.Scaffold.endpoint",
+      "file_path": "src/flask/sansio/scaffold.py",
+      "kind": "surface",
+      "path": [
+        "src.flask.sansio.scaffold.Scaffold.endpoint",
+        "src.flask.sansio.scaffold.setupmethod"
+      ]
+    },
+    {
+      "entry_point": "src.flask.sansio.scaffold.Scaffold.patch",
+      "file_path": "src/flask/sansio/scaffold.py",
+      "kind": "surface",
+      "path": [
+        "src.flask.sansio.scaffold.Scaffold.patch",
+        "src.flask.sansio.scaffold.setupmethod"
+      ]
+    },
+    {
+      "entry_point": "src.flask.sansio.scaffold.Scaffold.post",
+      "file_path": "src/flask/sansio/scaffold.py",
+      "kind": "surface",
+      "path": [
+        "src.flask.sansio.scaffold.Scaffold.post",
+        "src.flask.sansio.scaffold.setupmethod"
+      ]
+    },
+    {
+      "entry_point": "src.flask.sansio.scaffold.Scaffold.put",
+      "file_path": "src/flask/sansio/scaffold.py",
+      "kind": "surface",
+      "path": [
+        "src.flask.sansio.scaffold.Scaffold.put",
+        "src.flask.sansio.scaffold.setupmethod"
+      ]
+    },
+    {
+      "entry_point": "src.flask.app.Flask.__init__",
+      "file_path": "src/flask/app.py",
+      "kind": "surface",
+      "path": [
+        "src.flask.app.Flask.__init__",
+        "src.flask.sansio.app.App.add_url_rule",
+        "src.flask.sansio.scaffold.setupmethod"
+      ]
+    },
+    {
+      "entry_point": "src.flask.sansio.app.App.template_filter.decorator",
+      "file_path": "src/flask/sansio/app.py",
+      "kind": "surface",
+      "path": [
+        "src.flask.sansio.app.App.template_filter.decorator",
+        "src.flask.sansio.app.App.add_template_filter",
+        "src.flask.sansio.scaffold.setupmethod"
+      ]
+    },
+    {
+      "entry_point": "src.flask.sansio.app.App.template_global.decorator",
+      "file_path": "src/flask/sansio/app.py",
+      "kind": "surface",
+      "path": [
+        "src.flask.sansio.app.App.template_global.decorator",
+        "src.flask.sansio.app.App.add_template_global",
+        "src.flask.sansio.scaffold.setupmethod"
+      ]
+    },
+    {
+      "entry_point": "src.flask.sansio.app.App.template_test.decorator",
+      "file_path": "src/flask/sansio/app.py",
+      "kind": "surface",
+      "path": [
+        "src.flask.sansio.app.App.template_test.decorator",
+        "src.flask.sansio.app.App.add_template_test",
+        "src.flask.sansio.scaffold.setupmethod"
+      ]
+    },
+    {
+      "entry_point": "src.flask.sansio.blueprints.Blueprint.app_errorhandler.decorator",
+      "file_path": "src/flask/sansio/blueprints.py",
+      "kind": "surface",
+      "path": [
+        "src.flask.sansio.blueprints.Blueprint.app_errorhandler.decorator",
+        "src.flask.sansio.blueprints.Blueprint.record_once",
+        "src.flask.sansio.scaffold.setupmethod"
+      ]
+    },
+    {
+      "entry_point": "src.flask.sansio.blueprints.Blueprint.app_template_filter.decorator",
+      "file_path": "src/flask/sansio/blueprints.py",
+      "kind": "surface",
+      "path": [
+        "src.flask.sansio.blueprints.Blueprint.app_template_filter.decorator",
+        "src.flask.sansio.blueprints.Blueprint.add_app_template_filter",
+        "src.flask.sansio.scaffold.setupmethod"
+      ]
+    },
+    {
+      "entry_point": "src.flask.sansio.blueprints.Blueprint.app_template_global.decorator",
+      "file_path": "src/flask/sansio/blueprints.py",
+      "kind": "surface",
+      "path": [
+        "src.flask.sansio.blueprints.Blueprint.app_template_global.decorator",
+        "src.flask.sansio.blueprints.Blueprint.add_app_template_global",
+        "src.flask.sansio.scaffold.setupmethod"
+      ]
+    },
+    {
+      "entry_point": "src.flask.sansio.blueprints.Blueprint.app_template_test.decorator",
+      "file_path": "src/flask/sansio/blueprints.py",
+      "kind": "surface",
+      "path": [
+        "src.flask.sansio.blueprints.Blueprint.app_template_test.decorator",
+        "src.flask.sansio.blueprints.Blueprint.add_app_template_test",
+        "src.flask.sansio.scaffold.setupmethod"
+      ]
+    },
+    {
+      "entry_point": "src.flask.sansio.scaffold.Scaffold.errorhandler.decorator",
+      "file_path": "src/flask/sansio/scaffold.py",
+      "kind": "surface",
+      "path": [
+        "src.flask.sansio.scaffold.Scaffold.errorhandler.decorator",
+        "src.flask.sansio.scaffold.Scaffold.register_error_handler",
+        "src.flask.sansio.scaffold.setupmethod"
+      ]
+    },
+    {
+      "entry_point": "src.flask.sansio.scaffold.Scaffold.route.decorator",
+      "file_path": "src/flask/sansio/scaffold.py",
+      "kind": "surface",
+      "path": [
+        "src.flask.sansio.scaffold.Scaffold.route.decorator",
+        "src.flask.sansio.scaffold.Scaffold.add_url_rule",
+        "src.flask.sansio.scaffold.setupmethod"
+      ]
+    }
+  ],
   "affected": [
     {
       "fqn": "src.flask.sansio.scaffold.Scaffold.route",
