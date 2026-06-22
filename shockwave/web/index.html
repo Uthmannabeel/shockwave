@@ -3,297 +3,385 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Shockwave · Blast Monitor</title>
+<title>Shockwave — know what a change breaks, before you merge</title>
+<meta name="description" content="Shockwave reads GitLab Orbit's knowledge graph to map the blast radius of any code change: every dependent, the public entry points it reaches, and the high-risk code no test covers." />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
 <style>
   :root{
-    --bg:#080B14; --panel:#0E1424; --panel2:#121A2E; --line:#1D2740;
-    --text:#E8EDF7; --muted:#8C97B2; --faint:#5C6680;
-    --core:#FFE6A0; --d1:#FF6F5E; --d2:#F0529B; --d3:#A85FE6; --d4:#6E78F2;
-    --entry:#37E6D8; --test:#33B488; --warn:#FF9A3D;
-    --mono:'JetBrains Mono',ui-monospace,monospace;
-    --disp:'Space Grotesk',system-ui,sans-serif;
+    --bg:#07090F; --bg2:#0B0F1A; --surface:#0E1422; --surface2:#131B2C; --line:#1B2540; --line2:#243153;
+    --text:#ECF1FB; --muted:#9BA7C2; --faint:#616E8C;
+    --amber:#FFB454; --coral:#FF5C6C; --magenta:#E0479E; --violet:#7C84F2; --cyan:#2FE6D6; --green:#39B98A;
+    --disp:'Space Grotesk',system-ui,sans-serif; --mono:'JetBrains Mono',ui-monospace,monospace;
+    --grad:linear-gradient(100deg,var(--amber),var(--coral) 45%,var(--magenta));
+    --maxw:1180px;
   }
   *{box-sizing:border-box}
   [hidden]{display:none !important}
-  html,body{height:100%}
-  body{
-    margin:0;background:var(--bg);color:var(--text);font-family:var(--disp);
-    background-image:radial-gradient(900px 600px at 38% 30%, #101a33 0%, rgba(8,11,20,0) 60%);
-    overflow:hidden;
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--disp);line-height:1.5;
+    -webkit-font-smoothing:antialiased;overflow-x:hidden}
+  a{color:inherit}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
+  .mono{font-family:var(--mono)}
+  .grad-text{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+  /* ---------- nav ---------- */
+  nav{position:sticky;top:0;z-index:50;backdrop-filter:blur(12px);
+    background:rgba(7,9,15,.72);border-bottom:1px solid var(--line)}
+  .nav-in{display:flex;align-items:center;gap:28px;height:64px}
+  .logo{font-weight:700;letter-spacing:.12em;font-size:18px;text-decoration:none}
+  .logo b{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .nav-links{display:flex;gap:26px;margin-left:8px}
+  .nav-links a{color:var(--muted);text-decoration:none;font-size:14px;letter-spacing:.01em}
+  .nav-links a:hover{color:var(--text)}
+  .nav-cta{margin-left:auto;display:flex;gap:12px;align-items:center}
+  .btn{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 18px;border-radius:9px;
+    font-family:var(--disp);font-weight:600;font-size:14px;text-decoration:none;cursor:pointer;border:1px solid transparent;white-space:nowrap}
+  .btn-primary{color:#120A06;background:var(--grad);box-shadow:0 6px 24px rgba(255,92,108,.28)}
+  .btn-primary:hover{filter:brightness(1.06)}
+  .btn-ghost{color:var(--text);border-color:var(--line2);background:rgba(255,255,255,.02)}
+  .btn-ghost:hover{border-color:var(--muted)}
+  .nav-toggle{display:none}
+
+  /* ---------- hero ---------- */
+  .hero{position:relative;padding:84px 0 70px;overflow:hidden}
+  .hero::before{content:"";position:absolute;inset:-20% -10% auto -10%;height:680px;z-index:0;
+    background:radial-gradient(620px 380px at 72% 28%, rgba(224,71,158,.16), transparent 60%),
+               radial-gradient(560px 360px at 30% 10%, rgba(255,180,84,.10), transparent 60%);
+    pointer-events:none}
+  .hero-grid{position:relative;z-index:1;display:grid;grid-template-columns:1.04fr .96fr;gap:48px;align-items:center}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);
+    display:inline-flex;align-items:center;gap:10px;margin-bottom:22px}
+  .eyebrow .dot{width:7px;height:7px;border-radius:50%;background:var(--cyan);box-shadow:0 0 10px var(--cyan)}
+  h1{font-size:clamp(34px,4.6vw,58px);line-height:1.04;letter-spacing:-.02em;font-weight:700;margin:0 0 20px}
+  .sub{font-size:18px;color:var(--muted);max-width:540px;margin:0 0 30px}
+  .hero-cta{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:22px}
+  .trust{font-family:var(--mono);font-size:12px;color:var(--faint);letter-spacing:.04em}
+  .trust b{color:var(--muted);font-weight:500}
+
+  /* hero product panel */
+  .panel{position:relative;background:linear-gradient(180deg,var(--surface),#0A0F1B);
+    border:1px solid var(--line);border-radius:16px;box-shadow:0 30px 80px rgba(0,0,0,.5);overflow:hidden}
+  .panel-bar{display:flex;align-items:center;gap:8px;height:38px;padding:0 14px;border-bottom:1px solid var(--line);
+    font-family:var(--mono);font-size:11px;color:var(--faint)}
+  .panel-bar .d{width:9px;height:9px;border-radius:50%;background:#2A3354}
+  .panel-bar .ttl{margin-left:6px;color:var(--muted)}
+  .panel-bar .chip{margin-left:auto;color:var(--cyan)}
+  #heroMap{display:block;width:100%;height:380px}
+  .panel-foot{display:flex;gap:22px;padding:12px 16px;border-top:1px solid var(--line);font-family:var(--mono);font-size:11px}
+  .panel-foot b{font-size:17px;display:block;line-height:1.1}
+  .panel-foot .l{color:var(--faint);letter-spacing:.12em;text-transform:uppercase;font-size:9.5px;margin-top:3px}
+  .pf-exp b{color:var(--cyan)} .pf-hot b{color:var(--amber)}
+
+  /* ---------- section scaffolding ---------- */
+  section{position:relative;padding:90px 0}
+  .sec-eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--coral);margin:0 0 14px}
+  h2{font-size:clamp(26px,3.2vw,40px);line-height:1.1;letter-spacing:-.02em;margin:0 0 16px;font-weight:600}
+  .lead{font-size:18px;color:var(--muted);max-width:620px;margin:0}
+  .divider{height:1px;background:linear-gradient(90deg,transparent,var(--line2),transparent)}
+
+  /* problem */
+  .problem{background:radial-gradient(900px 380px at 50% 0%, rgba(255,92,108,.06), transparent 60%)}
+  .problem h2{max-width:880px}
+  .problem .big{font-size:clamp(24px,3vw,34px);font-weight:500;line-height:1.28;letter-spacing:-.01em;max-width:920px}
+  .problem .big em{font-style:normal;color:var(--text)}
+  .problem .big span{color:var(--faint)}
+
+  /* steps */
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:48px}
+  .step{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:26px}
+  .step .n{font-family:var(--mono);font-size:13px;color:var(--coral);letter-spacing:.1em}
+  .step h3{font-size:19px;margin:14px 0 8px;font-weight:600}
+  .step p{color:var(--muted);font-size:14.5px;margin:0}
+  .step code{font-family:var(--mono);color:var(--cyan);font-size:13px}
+
+  /* features */
+  .feat{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:48px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:24px;transition:border-color .2s,transform .2s}
+  .card:hover{border-color:var(--line2);transform:translateY(-2px)}
+  .card .ic{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;margin-bottom:16px;
+    background:rgba(255,255,255,.03);border:1px solid var(--line2);font-size:18px}
+  .card h3{font-size:18px;margin:0 0 8px;font-weight:600}
+  .card p{color:var(--muted);font-size:14.5px;margin:0}
+  .card .tag{display:inline-block;margin-top:14px;font-family:var(--mono);font-size:11px;color:var(--cyan);
+    border:1px solid rgba(47,230,214,.25);border-radius:20px;padding:3px 10px}
+
+  /* surfaces */
+  .surfaces{background:var(--bg2)}
+  .surf-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-top:46px}
+  .surf{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px 16px;text-align:center}
+  .surf .e{font-size:22px}
+  .surf h4{font-size:14px;margin:12px 0 6px;font-weight:600}
+  .surf p{font-size:12px;color:var(--muted);margin:0;line-height:1.45}
+
+  /* compare */
+  .cmp{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:44px}
+  .cmp .col{border:1px solid var(--line);border-radius:14px;padding:26px;background:var(--surface)}
+  .cmp .col.win{border-color:rgba(47,230,214,.3);background:linear-gradient(180deg,rgba(47,230,214,.05),var(--surface))}
+  .cmp h3{font-family:var(--mono);font-size:13px;letter-spacing:.06em;margin:0 0 16px;text-transform:uppercase}
+  .cmp .col.win h3{color:var(--cyan)} .cmp .col.lose h3{color:var(--faint)}
+  .cmp li{list-style:none;padding:9px 0 9px 28px;position:relative;color:var(--muted);font-size:14.5px;border-top:1px solid var(--line)}
+  .cmp li:first-child{border-top:0}
+  .cmp .col.win li::before{content:"▲";position:absolute;left:0;color:var(--cyan);font-size:11px;top:11px}
+  .cmp .col.lose li::before{content:"—";position:absolute;left:0;color:var(--faint);top:9px}
+  ul{margin:0;padding:0}
+
+  /* metrics */
+  .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:8px}
+  .metric{padding:8px 0}
+  .metric b{font-size:clamp(26px,3.4vw,38px);font-weight:700;letter-spacing:-.02em;display:block}
+  .metric .l{font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:6px}
+
+  /* cta band */
+  .band{text-align:center;background:
+    radial-gradient(700px 300px at 50% 120%, rgba(224,71,158,.18), transparent 60%);border-top:1px solid var(--line)}
+  .band h2{margin-bottom:10px}
+  .band .lead{margin:0 auto 28px}
+  .band .hero-cta{justify-content:center}
+
+  /* footer */
+  footer{border-top:1px solid var(--line);padding:40px 0;color:var(--faint);font-size:13px}
+  .foot-in{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+  footer a{color:var(--muted);text-decoration:none}
+  footer a:hover{color:var(--text)}
+  .foot-sp{margin-left:auto}
+
+  /* reveal */
+  .rv{opacity:0;transform:translateY(16px);transition:opacity .6s ease,transform .6s ease}
+  .rv.in{opacity:1;transform:none}
+  @media (prefers-reduced-motion:reduce){.rv{opacity:1;transform:none;transition:none}}
+
+  /* responsive */
+  @media(max-width:920px){
+    .hero-grid{grid-template-columns:1fr;gap:32px}
+    .steps,.feat{grid-template-columns:1fr}
+    .surf-grid{grid-template-columns:repeat(2,1fr)}
+    .cmp,.metrics{grid-template-columns:1fr 1fr}
+    .nav-links{display:none}
   }
-  .wrap{display:grid;grid-template-rows:auto auto 1fr;height:100vh}
-  /* ---- header ---- */
-  header{display:flex;align-items:baseline;gap:16px;padding:18px 26px 6px}
-  .mark{font-weight:700;font-size:22px;letter-spacing:.14em}
-  .mark b{color:var(--d1)}
-  .tag{font-family:var(--mono);font-size:11px;letter-spacing:.34em;color:var(--muted);text-transform:uppercase}
-  .by{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--faint);letter-spacing:.1em}
-  .by a{color:var(--muted);text-decoration:none;border-bottom:1px solid var(--line)}
-  /* ---- controls ---- */
-  .controls{display:flex;gap:10px;align-items:center;padding:8px 26px 14px;flex-wrap:wrap}
-  .field{display:flex;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:0 10px;height:42px}
-  .field svg{opacity:.5}
-  input,select{background:transparent;border:0;color:var(--text);font-family:var(--mono);font-size:14px;outline:none}
-  #seed{width:300px;padding:0 8px}
-  .seg{display:flex;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden;height:42px}
-  .seg button{background:transparent;border:0;color:var(--muted);font-family:var(--mono);font-size:12px;letter-spacing:.12em;padding:0 16px;cursor:pointer;text-transform:uppercase}
-  .seg button[aria-pressed=true]{background:var(--panel2);color:var(--text);box-shadow:inset 0 -2px 0 var(--d1)}
-  #hops{width:46px;text-align:center}
-  .go{height:42px;padding:0 22px;border:0;border-radius:10px;cursor:pointer;
-    font-family:var(--disp);font-weight:600;font-size:14px;letter-spacing:.04em;color:#0A0E18;
-    background:linear-gradient(180deg,#FFD27A,#FF6F5E);box-shadow:0 0 0 1px rgba(255,140,90,.4),0 8px 26px rgba(255,90,70,.28)}
-  .go:active{transform:translateY(1px)}
-  .remote-only{display:none}
-  body[data-mode=remote] .remote-only{display:flex}
-  #token{width:190px}
-  /* ---- main split ---- */
-  .main{display:grid;grid-template-columns:1fr 360px;gap:0;min-height:0}
-  .stage{position:relative;min-height:0;border-top:1px solid var(--line)}
-  .readout{position:absolute;left:22px;top:18px;z-index:5;display:flex;gap:26px;pointer-events:none}
-  .stat .n{font-family:var(--mono);font-weight:700;font-size:30px;line-height:1}
-  .stat .l{font-family:var(--mono);font-size:10px;letter-spacing:.22em;color:var(--muted);text-transform:uppercase;margin-top:4px}
-  .stat.exp .n{color:var(--entry)} .stat.hot .n{color:var(--warn)}
-  #epi{position:absolute;left:22px;bottom:18px;z-index:5;font-family:var(--mono);font-size:12px;color:var(--muted);pointer-events:none}
-  #epi b{color:var(--core);font-weight:500}
-  svg#map{width:100%;height:100%;display:block}
-  .legend{position:absolute;right:18px;top:16px;z-index:5;display:flex;flex-direction:column;gap:7px;font-family:var(--mono);font-size:10.5px;color:var(--muted);text-align:right}
-  .legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-left:8px;vertical-align:middle}
-  .node{cursor:pointer}
-  .node text{font-family:var(--mono);font-size:10px;fill:var(--muted);pointer-events:none}
-  .link{stroke:#27314F;stroke-width:1}
-  .link.lit{stroke:var(--entry);stroke-width:2;stroke-opacity:.95}
-  .ring{fill:none;stroke:#16203a}
-  /* ---- rail ---- */
-  .rail{background:linear-gradient(180deg,#0C1220,#0A0F1B);border-left:1px solid var(--line);border-top:1px solid var(--line);overflow:auto;padding:18px}
-  .rail h2{font-family:var(--mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted);margin:0 0 10px;display:flex;align-items:center;gap:8px}
-  .rail h2 .c{margin-left:auto;font-size:11px;color:var(--text);background:var(--panel2);border:1px solid var(--line);border-radius:20px;padding:1px 9px}
-  .ep{padding:9px 0;border-bottom:1px solid var(--line)}
-  .ep .top{display:flex;align-items:center;gap:8px}
-  .kind{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;padding:2px 7px;border-radius:20px;border:1px solid var(--line);color:var(--entry)}
-  .kind.route{color:var(--entry);border-color:rgba(55,230,216,.4)}
-  .kind.api{color:#7FB8FF} .kind.cli{color:#FFC36B} .kind.surface{color:var(--muted)}
-  .ep .nm{font-family:var(--mono);font-size:12.5px;color:var(--text);cursor:pointer;word-break:break-all}
-  .ep .nm:hover{color:var(--entry)}
-  .ep .path{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:5px;line-height:1.5;word-break:break-word}
-  .ep .path b{color:var(--d1);font-weight:500}
-  .hs{padding:9px 0;border-bottom:1px solid var(--line)}
-  .hs .top{display:flex;align-items:center;gap:8px}
-  .hs .nm{font-family:var(--mono);font-size:12.5px;color:var(--warn);word-break:break-all}
-  .hs .meta{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--muted)}
-  .hs details{margin-top:7px}
-  .hs summary{font-family:var(--mono);font-size:11px;color:var(--muted);cursor:pointer}
-  .hs pre{background:#080C16;border:1px solid var(--line);border-radius:8px;padding:10px;overflow:auto;font-family:var(--mono);font-size:11px;color:#CBD5EE;margin:7px 0 0}
-  .empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;color:var(--muted);font-family:var(--mono);font-size:13px}
-  .empty .big{font-family:var(--disp);font-size:18px;color:var(--text)}
-  .empty kbd{font-family:var(--mono);background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:2px 7px;color:var(--text)}
-  .err{color:var(--d1)}
-  .tip{position:fixed;pointer-events:none;z-index:30;background:#0A0F1C;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-family:var(--mono);font-size:11px;color:var(--text);max-width:280px;opacity:0;transition:opacity .12s}
-  .tip .f{color:var(--muted);margin-top:3px}
-  .spin{display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,.25);border-top-color:#fff;border-radius:50%;animation:s .7s linear infinite}
-  @keyframes s{to{transform:rotate(360deg)}}
-  @media (prefers-reduced-motion:reduce){.pulse{display:none}}
+  @media(max-width:560px){.metrics{grid-template-columns:1fr 1fr}.nav-cta .btn-ghost{display:none}}
 </style>
 </head>
-<body data-mode="local">
-<div class="wrap">
-  <header>
-    <span class="mark">SHOCK<b>WAVE</b></span>
-    <span class="tag">Blast Monitor</span>
-    <span class="by">impact &amp; exposure on the <a href="https://about.gitlab.com/gitlab-orbit/" target="_blank" rel="noopener">GitLab Orbit</a> graph</span>
-  </header>
+<body>
 
-  <div class="controls">
-    <label class="field">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-      <input id="seed" placeholder="function, class, or file …  e.g. setupmethod" autocomplete="off" spellcheck="false"/>
-    </label>
-    <div class="seg" role="group" aria-label="Backend">
-      <button id="b-local" aria-pressed="true">Local</button>
-      <button id="b-remote" aria-pressed="false">Remote</button>
+<nav>
+  <div class="wrap nav-in">
+    <a href="/" class="logo">SHOCK<b>WAVE</b></a>
+    <div class="nav-links">
+      <a href="#how">How it works</a>
+      <a href="#surfaces">What it surfaces</a>
+      <a href="#where">Where it runs</a>
+      <a href="#why">Why Orbit</a>
     </div>
-    <label class="field remote-only"><input id="url" value="https://gitlab.com" size="16"/></label>
-    <label class="field remote-only"><input id="token" type="password" placeholder="GitLab token"/></label>
-    <label class="field" title="Max hops">hops&nbsp;<input id="hops" value="4" inputmode="numeric"/></label>
-    <button class="go" id="go">Detonate ⚡</button>
+    <div class="nav-cta">
+      <a class="btn btn-ghost" href="https://github.com/Uthmannabeel/shockwave" target="_blank" rel="noopener">GitHub</a>
+      <a class="btn btn-primary" href="/app">Launch Blast Monitor</a>
+    </div>
   </div>
+</nav>
 
-  <div class="main">
-    <div class="stage">
-      <div class="readout" id="readout" hidden>
-        <div class="stat"><div class="n" id="s-aff">0</div><div class="l">Affected</div></div>
-        <div class="stat"><div class="n" id="s-files">0</div><div class="l">Files</div></div>
-        <div class="stat hot"><div class="n" id="s-hot">0</div><div class="l">No-test</div></div>
-        <div class="stat exp"><div class="n" id="s-exp">0</div><div class="l">Exposed</div></div>
+<!-- HERO -->
+<header class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <div class="eyebrow"><span class="dot"></span> Impact intelligence for code review · built on GitLab Orbit</div>
+      <h1>Know what a change <span class="grad-text">breaks</span>, before you merge.</h1>
+      <p class="sub">Shockwave reads GitLab Orbit's knowledge graph to map the full blast radius of any change — every dependent, the public entry points it's reachable from, and the high-risk code no test covers. In your terminal, on your merge requests, and in GitLab Duo.</p>
+      <div class="hero-cta">
+        <a class="btn btn-primary" href="/app">Launch the Blast Monitor →</a>
+        <a class="btn btn-ghost" href="https://github.com/Uthmannabeel/shockwave" target="_blank" rel="noopener">View the source</a>
       </div>
-      <div class="legend" id="legend" hidden>
-        <span>epicenter <i style="background:var(--core)"></i></span>
-        <span>depth&nbsp;1–4+ <i style="background:var(--d1)"></i><i style="background:var(--d2)"></i><i style="background:var(--d3)"></i><i style="background:var(--d4)"></i></span>
-        <span>entry point <i style="background:var(--entry)"></i></span>
-        <span>test <i style="background:var(--test)"></i></span>
-      </div>
-      <svg id="map" aria-label="Blast map"></svg>
-      <div id="epi" hidden></div>
-      <div class="empty" id="empty">
-        <div class="big">Pick an epicenter.</div>
-        <div>Type a symbol and hit <kbd>Detonate</kbd> to see what a change ripples into.</div>
-        <div>Index a repo first: <kbd>orbit index .</kbd></div>
-      </div>
+      <div class="trust">Open source · <b>MIT</b> &nbsp;·&nbsp; runs on Orbit <b>Local + Remote</b> &nbsp;·&nbsp; CLI · MR bot · Duo agent</div>
     </div>
 
-    <aside class="rail">
-      <section id="exp-sec" hidden>
-        <h2>🚪 Exposure <span class="c" id="exp-c">0</span></h2>
-        <div id="exp-list"></div>
-      </section>
-      <section id="hs-sec" hidden style="margin-top:22px">
-        <h2>🔥 Hotspots &amp; tests <span class="c" id="hs-c">0</span></h2>
-        <div id="hs-list"></div>
-      </section>
-    </aside>
+    <div class="panel rv">
+      <div class="panel-bar">
+        <span class="d"></span><span class="d"></span><span class="d"></span>
+        <span class="ttl mono">blast radius · setupmethod</span>
+        <span class="chip mono">reachable from @route</span>
+      </div>
+      <svg id="heroMap" aria-label="Blast radius map"></svg>
+      <div class="panel-foot">
+        <div><b>114</b><span class="l">Affected</span></div>
+        <div><b>10</b><span class="l">Files</span></div>
+        <div class="pf-hot"><b>7</b><span class="l">No-test</span></div>
+        <div class="pf-exp"><b>2</b><span class="l">Exposed</span></div>
+      </div>
+    </div>
   </div>
-</div>
-<div class="tip" id="tip"></div>
+</header>
+
+<!-- PROBLEM -->
+<section class="problem" id="problem">
+  <div class="wrap">
+    <p class="sec-eyebrow rv">The blind spot</p>
+    <p class="big rv"><em>Every reviewer has approved a one-line change that quietly broke something three files away.</em> <span>The honest question in review — “if I change this, what actually breaks?” — is one</span> <code class="mono" style="color:var(--coral)">grep</code> <span>can't answer. The answer lives in the resolved call graph, not in text.</span> <em>GitLab Orbit already built that graph. Shockwave turns it into the answer.</em></p>
+  </div>
+</section>
+<div class="wrap"><div class="divider"></div></div>
+
+<!-- HOW -->
+<section id="how">
+  <div class="wrap">
+    <p class="sec-eyebrow rv">How it works</p>
+    <h2 class="rv">From a change to its consequences.</h2>
+    <p class="lead rv">Three steps, no setup beyond indexing your repo. Shockwave never guesses — it only reports what the graph returns.</p>
+    <div class="steps">
+      <div class="step rv"><div class="n">01 · SEED</div><h3>Pick the epicenter</h3><p>Point at a function, class, file, or a whole merge-request diff — <code>shockwave analyze process_payment</code>.</p></div>
+      <div class="step rv"><div class="n">02 · TRAVERSE</div><h3>Walk the Orbit graph</h3><p>A cycle-safe traversal of inbound <code>CALLS</code> and <code>EXTENDS</code> edges finds everything that transitively depends on the change.</p></div>
+      <div class="step rv"><div class="n">03 · REPORT</div><h3>Rank, expose, suggest</h3><p>Risk-ranked impact, the public entry points it reaches, and a generated test stub for every untested hotspot.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES / SURFACES OF ANALYSIS -->
+<section id="surfaces">
+  <div class="wrap">
+    <p class="sec-eyebrow rv">What it surfaces</p>
+    <h2 class="rv">Three answers reviewers actually need.</h2>
+    <div class="feat">
+      <div class="card rv"><div class="ic">⚡</div><h3>Blast radius</h3><p>The transitive set of definitions that depend on your change — across files — ranked by fan-in and proximity, grouped by file.</p><span class="tag">impact</span></div>
+      <div class="card rv"><div class="ic">🚪</div><h3>Exposure</h3><p>Whether the change is reachable from a public entry point — a route, API, or CLI — with the exact call path. A break that's externally observable, not internal-only.</p><span class="tag">reachability</span></div>
+      <div class="card rv"><div class="ic">🧪</div><h3>Untested hotspots</h3><p>High fan-in code that no test calls directly — the stuff that breaks silently — each with a ready-to-fill pytest stub so you know what to pin down first.</p><span class="tag">test coverage</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- WHERE IT RUNS -->
+<section class="surfaces" id="where">
+  <div class="wrap">
+    <p class="sec-eyebrow rv">Where it runs</p>
+    <h2 class="rv">One graph. Five surfaces.</h2>
+    <p class="lead rv">The same analysis meets your team wherever review happens — not a single dashboard you have to remember to open.</p>
+    <div class="surf-grid">
+      <div class="surf rv"><div class="e">⌨️</div><h4>CLI</h4><p><span class="mono">shockwave analyze / diff</span> in your terminal or CI.</p></div>
+      <div class="surf rv"><div class="e">🗺️</div><h4>Blast Monitor</h4><p>An interactive radial map of the impact.</p></div>
+      <div class="surf rv"><div class="e">🤖</div><h4>Merge-request bot</h4><p>Auto-posts the review on every MR.</p></div>
+      <div class="surf rv"><div class="e">✨</div><h4>Duo agent</h4><p>Ask in the GitLab AI Catalog.</p></div>
+      <div class="surf rv"><div class="e">🧩</div><h4>Reachability skill</h4><p>Reusable Orbit recipes for any agent.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- WHY ORBIT / COMPARE -->
+<section id="why">
+  <div class="wrap">
+    <p class="sec-eyebrow rv">Why a knowledge graph</p>
+    <h2 class="rv">grep finds text. Orbit knows your code.</h2>
+    <div class="cmp">
+      <div class="col lose rv">
+        <h3>Text search</h3>
+        <ul>
+          <li>Matches a name, not a reference</li>
+          <li>Misses cross-file and inherited callers</li>
+          <li>No notion of distance, risk, or coverage</li>
+          <li>Can't tell internal from externally reachable</li>
+        </ul>
+      </div>
+      <div class="col win rv">
+        <h3>Shockwave + Orbit</h3>
+        <ul>
+          <li>Follows the resolved call &amp; inheritance graph</li>
+          <li>Transitive, cycle-safe, with hop distance</li>
+          <li>Ranks risk and flags untested hotspots</li>
+          <li>Traces the path from a public entry point to the change</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="wrap"><div class="divider"></div></div>
+
+<!-- METRICS -->
+<section>
+  <div class="wrap">
+    <p class="sec-eyebrow rv">Real, not a mock</p>
+    <h2 class="rv" style="margin-bottom:34px">Verifiable on day one.</h2>
+    <div class="metrics">
+      <div class="metric rv"><b class="grad-text">114</b><div class="l">defs impacted by one<br>Flask decorator</div></div>
+      <div class="metric rv"><b>2</b><div class="l">Orbit backends<br>Local + Remote</div></div>
+      <div class="metric rv"><b>5</b><div class="l">surfaces<br>CLI · web · bot · agent · skill</div></div>
+      <div class="metric rv"><b class="grad-text">MIT</b><div class="l">open source<br>18 passing tests</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="band">
+  <div class="wrap">
+    <h2 class="rv">Stop reviewing blind.</h2>
+    <p class="lead rv">See the blast radius, the exposure, and the missing tests — before you click merge.</p>
+    <div class="hero-cta rv">
+      <a class="btn btn-primary" href="/app">Launch the Blast Monitor →</a>
+      <a class="btn btn-ghost" href="https://github.com/Uthmannabeel/shockwave" target="_blank" rel="noopener">Read the code</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap foot-in">
+    <a href="/" class="logo" style="font-size:15px">SHOCK<b>WAVE</b></a>
+    <a href="/app">Blast Monitor</a>
+    <a href="#how">How it works</a>
+    <a href="https://github.com/Uthmannabeel/shockwave" target="_blank" rel="noopener">GitHub</a>
+    <a href="https://about.gitlab.com/gitlab-orbit/" target="_blank" rel="noopener">GitLab Orbit</a>
+    <span class="foot-sp mono">Built for the GitLab Transcend hackathon · MIT</span>
+  </div>
+</footer>
 
 <script>
-const $ = s => document.querySelector(s);
-const svg = d3.select('#map'), tip = $('#tip');
-let mode = 'local';
-const DCOLOR = ['var(--core)','#FF6F5E','#F0529B','#A85FE6','#6E78F2'];
-const dc = d => DCOLOR[Math.min(d, DCOLOR.length-1)];
-
-$('#b-local').onclick = () => setMode('local');
-$('#b-remote').onclick = () => setMode('remote');
-function setMode(m){ mode=m; document.body.dataset.mode=m;
-  $('#b-local').setAttribute('aria-pressed', m==='local');
-  $('#b-remote').setAttribute('aria-pressed', m==='remote'); }
-
-$('#seed').addEventListener('keydown', e => { if(e.key==='Enter') run(); });
-$('#go').onclick = run;
-
-async function run(){
-  const seed = $('#seed').value.trim();
-  if(!seed) return;
-  const p = new URLSearchParams({seed, hops:$('#hops').value||'4', backend:mode});
-  if(mode==='remote'){ p.set('url',$('#url').value); p.set('token',$('#token').value); }
-  const empty = $('#empty');
-  empty.hidden = false; empty.innerHTML = '<div class="big"><span class="spin"></span></div><div>Mapping the blast radius…</div>';
-  try{
-    const r = await fetch('/api/analyze?'+p.toString());
-    const data = await r.json();
-    if(!r.ok){ empty.hidden=false; empty.innerHTML = '<div class="big err">No blast.</div><div class="err">'+(data.error||'Something went wrong.')+'</div>'; clearAll(); return; }
-    empty.hidden = true;
-    render(data);
-  }catch(e){ empty.innerHTML = '<div class="big err">Server unreachable.</div><div>Is <code>shockwave-web</code> running?</div>'; }
-}
-
-function clearAll(){ svg.selectAll('*').remove(); ['readout','legend','epi'].forEach(i=>$('#'+i).hidden=true);
-  $('#exp-sec').hidden=true; $('#hs-sec').hidden=true; }
-
-let sim;
-function render(d){
-  clearAll();
-  // readout
-  $('#s-aff').textContent = d.summary.affected_definitions;
-  $('#s-files').textContent = d.summary.affected_files;
-  $('#s-hot').textContent = d.summary.hotspots;
-  $('#s-exp').textContent = d.summary.entry_points;
-  $('#readout').hidden=false; $('#legend').hidden=false;
-  $('#epi').hidden=false; $('#epi').innerHTML = 'EPICENTER&nbsp; <b>'+d.seed+'</b>';
-
-  const W = svg.node().clientWidth, H = svg.node().clientHeight;
-  const cx = W/2, cy = H/2;
-  const maxD = Math.max(1, d3.max(d.nodes, n=>n.depth) || 1);
-  const ringGap = Math.min(W,H)/2.4 / maxD;
-
-  // concentric guide rings
-  const g = svg.append('g');
-  for(let i=1;i<=maxD;i++) g.append('circle').attr('class','ring').attr('cx',cx).attr('cy',cy).attr('r',i*ringGap);
-
-  // shockwave pulse
-  if(!matchMedia('(prefers-reduced-motion: reduce)').matches){
-    const pulse = svg.append('circle').attr('class','pulse').attr('cx',cx).attr('cy',cy).attr('r',6)
-      .attr('fill','none').attr('stroke','var(--core)').attr('stroke-width',2).attr('opacity',.9);
-    pulse.transition().duration(900).ease(d3.easeCubicOut).attr('r',maxD*ringGap+30).attr('opacity',0).remove();
+// ---- hero blast map (baked sample so it always looks alive) ----
+(function(){
+  const svg = d3.select('#heroMap');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const DC = ['#FFE6A0','#FF6F5E','#E0479E','#7C84F2'];
+  // build a representative sample: epicenter + rings + 2 cyan entry points + tests
+  const nodes=[{id:'c',d:0,role:'epi'}];
+  let k=0;
+  const ring=(depth,count,role)=>{for(let i=0;i<count;i++)nodes.push({id:'n'+(k++),d:depth,role:role||'n'});};
+  ring(1,7); ring(2,9); ring(3,6);
+  nodes.push({id:'e1',d:1,role:'entry'},{id:'e2',d:2,role:'entry'});
+  for(let i=0;i<10;i++)nodes.push({id:'t'+i,d:3,role:'test'});
+  // links: each non-epi connects toward a shallower node
+  const links=[]; const byDepth={};
+  nodes.forEach(n=>{(byDepth[n.d]=byDepth[n.d]||[]).push(n)});
+  nodes.forEach(n=>{ if(n.d===0)return; const up=byDepth[n.d-1]||byDepth[0]; const t=up[Math.floor((n.id.length*7+n.d*3)%up.length)]; links.push({source:n.id,target:t.id}); });
+  function draw(){
+    svg.selectAll('*').remove();
+    const W=svg.node().clientWidth||640, H=380, cx=W/2, cy=H/2;
+    const maxD=3, gap=Math.min(W,H)/2.5/maxD;
+    const g=svg.append('g');
+    for(let i=1;i<=maxD;i++)g.append('circle').attr('cx',cx).attr('cy',cy).attr('r',i*gap).attr('fill','none').attr('stroke','#16203a');
+    const link=g.append('g').selectAll('line').data(links).join('line').attr('stroke','#212C49').attr('stroke-width',1);
+    const node=g.append('g').selectAll('circle').data(nodes).join('circle')
+      .attr('r',n=>n.role==='epi'?11:(n.role==='entry'?6:(n.role==='test'?3:4.5)))
+      .attr('fill',n=>n.role==='test'?'#39B98A':(n.role==='entry'?'#2FE6D6':DC[Math.min(n.d,3)]))
+      .attr('opacity',n=>n.role==='test'?.5:1)
+      .attr('stroke',n=>n.role==='entry'?'#2FE6D6':'rgba(0,0,0,.35)')
+      .attr('stroke-width',n=>n.role==='entry'?2:1)
+      .style('filter',n=>n.role==='entry'?'drop-shadow(0 0 6px #2FE6D6)':(n.role==='epi'?'drop-shadow(0 0 12px #FFE6A0)':'none'));
+    const epi=nodes[0]; epi.fx=cx; epi.fy=cy;
+    const sim=d3.forceSimulation(nodes)
+      .force('link',d3.forceLink(links).id(n=>n.id).distance(gap*.8).strength(.12))
+      .force('charge',d3.forceManyBody().strength(-70))
+      .force('radial',d3.forceRadial(n=>n.d*gap,cx,cy).strength(.95))
+      .force('collide',d3.forceCollide(8))
+      .on('tick',()=>{link.attr('x1',l=>l.source.x).attr('y1',l=>l.source.y).attr('x2',l=>l.target.x).attr('y2',l=>l.target.y);
+        node.attr('cx',n=>n.x).attr('cy',n=>n.y);});
+    if(reduce){sim.tick(120);sim.stop();}
+    function pulse(){const p=svg.insert('circle',':first-child').attr('cx',cx).attr('cy',cy).attr('r',8)
+      .attr('fill','none').attr('stroke','#FFE6A0').attr('stroke-width',2).attr('opacity',.55);
+      p.transition().duration(1600).ease(d3.easeCubicOut).attr('r',maxD*gap+24).attr('opacity',0).remove();}
+    if(!reduce){pulse(); setInterval(pulse,4200);}
   }
-
-  const nodes = d.nodes.map(n=>({...n}));
-  const byId = new Map(nodes.map(n=>[n.id,n]));
-  const links = d.links.filter(l=>byId.has(l.source)&&byId.has(l.target)).map(l=>({...l}));
-  // parent toward epicenter (a node depends on link.target)
-  const parent = new Map();
-  links.forEach(l=>{ if(!parent.has(l.source)) parent.set(l.source, l.target); });
-
-  const rOf = n => n.role==='epicenter' ? 13 : 4 + Math.sqrt(n.fan_in||0)*2.2;
-
-  const link = g.append('g').selectAll('line').data(links).join('line').attr('class','link');
-  const node = g.append('g').selectAll('g').data(nodes).join('g').attr('class','node');
-
-  node.append('circle')
-    .attr('r', rOf)
-    .attr('fill', n => n.role==='test' ? 'var(--test)' : dc(n.depth))
-    .attr('opacity', n => n.role==='test' ? .5 : 1)
-    .attr('stroke', n => n.role==='entry' ? 'var(--entry)' : (n.role==='hotspot' ? 'var(--warn)' : 'rgba(0,0,0,.35)'))
-    .attr('stroke-width', n => n.role==='entry'||n.role==='hotspot' ? 2.4 : 1)
-    .style('filter', n => n.role==='entry' ? 'drop-shadow(0 0 7px var(--entry))' : (n.role==='epicenter'?'drop-shadow(0 0 12px var(--core))':'none'));
-
-  node.filter(n=>n.role==='epicenter'||n.role==='entry')
-    .append('text').attr('x', n=>rOf(n)+5).attr('y',4)
-    .text(n=>n.label).attr('fill', n=>n.role==='entry'?'var(--entry)':'var(--core)');
-
-  node.on('mousemove', (e,n)=>{
-    tip.style.opacity=1; tip.style.left=(e.clientX+14)+'px'; tip.style.top=(e.clientY+14)+'px';
-    tip.innerHTML = '<div>'+n.fqn+'</div><div class="f">'+n.file+' · depth '+n.depth+' · fan-in '+n.fan_in+' · '+n.role+'</div>';
-    litePath(n.id);
-  }).on('mouseleave', ()=>{ tip.style.opacity=0; link.classed('lit',false); });
-
-  function litePath(id){
-    const set=new Set(); let cur=id, guard=0;
-    while(cur!=null && guard++<40){ const nx=parent.get(cur); if(nx==null) break; set.add(cur+'>'+nx); cur=nx; }
-    link.classed('lit', l=>set.has(l.source+'>'+l.target));
-  }
-
-  const epi = nodes.find(n=>n.role==='epicenter'); if(epi){ epi.fx=cx; epi.fy=cy; }
-  sim && sim.stop();
-  sim = d3.forceSimulation(nodes)
-    .force('link', d3.forceLink(links).id(n=>n.id).distance(ringGap*.8).strength(.15))
-    .force('charge', d3.forceManyBody().strength(-90))
-    .force('radial', d3.forceRadial(n=>n.depth*ringGap, cx, cy).strength(.92))
-    .force('collide', d3.forceCollide(n=>rOf(n)+3))
-    .on('tick', ()=>{
-      link.attr('x1',l=>l.source.x).attr('y1',l=>l.source.y).attr('x2',l=>l.target.x).attr('y2',l=>l.target.y);
-      node.attr('transform',n=>`translate(${n.x},${n.y})`);
-    });
-
-  // ---- rail: exposure ----
-  const expSec=$('#exp-sec'), expList=$('#exp-list');
-  expList.innerHTML=''; $('#exp-c').textContent=d.exposure.length;
-  expSec.hidden = d.exposure.length===0;
-  d.exposure.slice(0,40).forEach(ep=>{
-    const el=document.createElement('div'); el.className='ep';
-    const path = ep.path.map((s,i)=> i===ep.path.length-1 ? '<b>'+s+'</b>' : s).join(' → ');
-    el.innerHTML = '<div class="top"><span class="kind '+ep.kind+'">'+ep.kind+'</span><span class="nm" data-fqn="'+ep.entry_point+'">'+ep.entry_point+'</span></div><div class="path">'+path+'</div>';
-    el.querySelector('.nm').onclick = ()=>{ const t=nodes.find(n=>n.fqn===ep.entry_point); if(t){ litePath(t.id); setTimeout(()=>link.classed('lit',false),1600);} };
-    expList.appendChild(el);
-  });
-
-  // ---- rail: hotspots + stubs ----
-  const hsSec=$('#hs-sec'), hsList=$('#hs-list');
-  const hot = d.affected.filter(a=>a.is_hotspot);
-  const stubFor = {}; d.suggested_tests.forEach(s=>stubFor[s.fqn]=s.code);
-  hsList.innerHTML=''; $('#hs-c').textContent=hot.length; hsSec.hidden = hot.length===0;
-  hot.forEach(a=>{
-    const el=document.createElement('div'); el.className='hs';
-    const stub = stubFor[a.fqn] ? '<details><summary>suggested test</summary><pre>'+escapeHtml(stubFor[a.fqn])+'</pre></details>' : '';
-    el.innerHTML = '<div class="top"><span class="nm">'+a.fqn+'</span><span class="meta">fan-in '+a.fan_in+' · d'+a.depth+'</span></div><div class="path" style="color:var(--muted);font-family:var(--mono);font-size:11px;margin-top:4px">'+a.file_path+'</div>'+stub;
-    hsList.appendChild(el);
-  });
-}
-function escapeHtml(s){return s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
-window.addEventListener('resize', ()=>{ /* keep it simple: rerun on demand */ });
+  draw(); addEventListener('resize',()=>{clearTimeout(window.__r);window.__r=setTimeout(draw,200)});
+})();
+// ---- scroll reveals ----
+const io=new IntersectionObserver((es)=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.14});
+document.querySelectorAll('.rv').forEach(el=>io.observe(el));
 </script>
 </body>
 </html>

@@ -23,6 +23,10 @@ def create_app():
     def index():
         return send_from_directory(app.static_folder, "index.html")
 
+    @app.get("/app")
+    def monitor():
+        return send_from_directory(app.static_folder, "app.html")
+
     @app.get("/api/analyze")
     def analyze():
         enable_os_trust()
