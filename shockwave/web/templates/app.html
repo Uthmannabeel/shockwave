@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+{% block title %}Blast Monitor — Shockwave{% endblock %}
+{% block bodyclass %}app{% endblock %}
+{% block footer %}{% endblock %}
+{% block head %}
+<style>
+  body.app{overflow:hidden}
+  .app-shell{height:calc(100vh - 64px);display:grid;grid-template-rows:auto 1fr;min-height:0}
+  .controls{display:flex;gap:10px;align-items:center;padding:13px 24px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+  .field{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:0 12px;height:42px}
+  .field svg{opacity:.5}
+  .controls input,.controls select{background:transparent;border:0;color:var(--text);font-family:var(--mono);font-size:14px;outline:none}
+  #seed{width:280px}
+  .seg{display:flex;background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;height:42px}
+  .seg button{background:transparent;border:0;color:var(--muted);font-family:var(--mono);font-size:12px;letter-spacing:.1em;padding:0 16px;cursor:pointer;text-transform:uppercase}
+  .seg button[aria-pressed=true]{background:var(--elevated);color:var(--text);box-shadow:inset 0 -2px 0 var(--coral)}
+  #hops{width:42px;text-align:center}
+  .remote-only{display:none}
+  body[data-mode=remote] .remote-only{display:flex}
+  #token{width:170px}
+  .app-main{display:grid;grid-template-columns:1fr 358px;min-height:0}
+  /* the stage is a dark instrument in both themes */
+  .stage{position:relative;background:#0A0F1B;min-height:0;overflow:hidden}
+  svg#map{width:100%;height:100%;display:block}
+  .readout{position:absolute;left:22px;top:18px;z-index:5;display:flex;gap:26px;pointer-events:none}
+  .stat .n{font-family:var(--mono);font-weight:700;font-size:28px;line-height:1;color:#ECF1FB}
+  .stat .l{font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:#7C88A6;text-transform:uppercase;margin-top:4px}
+  .stat.exp .n{color:#2FE6D6} .stat.hot .n{color:#FFB454}
+  .legend{position:absolute;right:18px;top:16px;z-index:5;display:flex;flex-direction:column;gap:7px;font-family:var(--mono);font-size:10.5px;color:#7C88A6;text-align:right}
+  .legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-left:8px;vertical-align:middle}
+  #epi{position:absolute;left:22px;bottom:16px;z-index:5;font-family:var(--mono);font-size:12px;color:#7C88A6;pointer-events:none}
+  #epi b{color:#FFE6A0;font-weight:500}
+  .ring{fill:none;stroke:#16203a}
+  .node{cursor:pointer}
+  .node text{font-family:var(--mono);font-size:10px;fill:#9BA7C2;pointer-events:none}
+  .link{stroke:#212C49;stroke-width:1}
+  .link.lit{stroke:#2FE6D6;stroke-width:2;stroke-opacity:.95}
+  .rail{background:var(--surface);border-left:1px solid var(--border);overflow:auto;padding:18px}
+  .rail h2{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin:0 0 10px;display:flex;align-items:center;gap:8px;font-weight:500}
+  .rail h2 .c{margin-left:auto;font-size:11px;color:var(--text);background:var(--elevated);border:1px solid var(--border);border-radius:20px;padding:1px 9px}
+  .ep,.hs{padding:10px 0;border-bottom:1px solid var(--border)}
+  .ep .top,.hs .top{display:flex;align-items:center;gap:8px}
+  .kind{font-family:var(--mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;padding:2px 7px;border-radius:20px;border:1px solid var(--border);color:var(--cyan)}
+  .kind.api{color:#5C9DFF} .kind.cli{color:#E0A23C} .kind.surface{color:var(--muted)}
+  .ep .nm{font-family:var(--mono);font-size:12.5px;color:var(--text);cursor:pointer;word-break:break-all}
+  .ep .nm:hover{color:var(--cyan)}
+  .ep .path{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:5px;line-height:1.5;word-break:break-word}
+  .ep .path b{color:var(--coral);font-weight:500}
+  .hs .nm{font-family:var(--mono);font-size:12.5px;color:var(--amber);word-break:break-all}
+  .hs .meta{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--muted)}
+  .hs .fp{color:var(--muted);font-family:var(--mono);font-size:11px;margin-top:4px;word-break:break-all}
+  .hs details{margin-top:7px}
+  .hs summary{font-family:var(--mono);font-size:11px;color:var(--muted);cursor:pointer}
+  .hs pre{background:#0A0F1B;border:1px solid #1B2540;border-radius:8px;padding:10px;overflow:auto;font-family:var(--mono);font-size:11px;color:#CBD5EE;margin:7px 0 0}
+  .empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;color:#7C88A6;font-family:var(--mono);font-size:13px}
+  .empty .big{font-family:var(--disp);font-size:19px;color:#ECF1FB}
+  .empty kbd{font-family:var(--mono);background:#131B2C;border:1px solid #26324F;border-radius:6px;padding:2px 7px;color:#ECF1FB}
+  .err{color:#FF6F5E}
+  .tip{position:fixed;pointer-events:none;z-index:80;background:#0A0F1C;border:1px solid #26324F;border-radius:8px;padding:8px 10px;font-family:var(--mono);font-size:11px;color:#ECF1FB;max-width:300px;opacity:0;transition:opacity .12s}
+  .tip .f{color:#7C88A6;margin-top:3px}
+  .spin{display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,.25);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  @media(max-width:820px){.app-main{grid-template-columns:1fr}.rail{display:none}}
+</style>
+{% endblock %}
+{% block content %}
+<div class="app-shell">
+  <div class="controls">
+    <label class="field">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      <input id="seed" placeholder="function, class, or file …  e.g. setupmethod" autocomplete="off" spellcheck="false"/>
+    </label>
+    <div class="seg" role="group" aria-label="Backend">
+      <button id="b-local" aria-pressed="true">Local</button>
+      <button id="b-remote" aria-pressed="false">Remote</button>
+    </div>
+    <label class="field remote-only"><input id="url" value="https://gitlab.com" size="16"/></label>
+    <label class="field remote-only"><input id="token" type="password" placeholder="GitLab token"/></label>
+    <label class="field">hops <input id="hops" value="4" inputmode="numeric"/></label>
+    <button class="btn btn-primary" id="go">Detonate ⚡</button>
+  </div>
+  <div class="app-main">
+    <div class="stage">
+      <div class="readout" id="readout" hidden>
+        <div class="stat"><div class="n" id="s-aff">0</div><div class="l">Affected</div></div>
+        <div class="stat"><div class="n" id="s-files">0</div><div class="l">Files</div></div>
+        <div class="stat hot"><div class="n" id="s-hot">0</div><div class="l">No-test</div></div>
+        <div class="stat exp"><div class="n" id="s-exp">0</div><div class="l">Exposed</div></div>
+      </div>
+      <div class="legend" id="legend" hidden>
+        <span>epicenter <i style="background:#FFE6A0"></i></span>
+        <span>depth 1–4+ <i style="background:#FF6F5E"></i><i style="background:#E0479E"></i><i style="background:#A85FE6"></i><i style="background:#6E78F2"></i></span>
+        <span>entry point <i style="background:#2FE6D6"></i></span>
+        <span>test <i style="background:#39B98A"></i></span>
+      </div>
+      <svg id="map" aria-label="Blast map"></svg>
+      <div id="epi" hidden></div>
+      <div class="empty" id="empty">
+        <div class="big">Pick an epicenter.</div>
+        <div>Type a symbol and hit <kbd>Detonate</kbd> to see what a change ripples into.</div>
+        <div>Index a repo first: <kbd>orbit index .</kbd></div>
+      </div>
+    </div>
+    <aside class="rail">
+      <section id="exp-sec" hidden>
+        <h2>🚪 Exposure <span class="c" id="exp-c">0</span></h2>
+        <div id="exp-list"></div>
+      </section>
+      <section id="hs-sec" hidden style="margin-top:22px">
+        <h2>🔥 Hotspots &amp; tests <span class="c" id="hs-c">0</span></h2>
+        <div id="hs-list"></div>
+      </section>
+    </aside>
+  </div>
+</div>
+<div class="tip" id="tip"></div>
+{% endblock %}
+{% block scripts %}
+<script>
+const $ = s => document.querySelector(s);
+const svg = d3.select('#map'), tip = $('#tip');
+let mode='local';
+const DCOLOR=['#FFE6A0','#FF6F5E','#E0479E','#A85FE6','#6E78F2'];
+const dc=d=>DCOLOR[Math.min(d,DCOLOR.length-1)];
+$('#b-local').onclick=()=>setMode('local'); $('#b-remote').onclick=()=>setMode('remote');
+function setMode(m){mode=m;document.body.dataset.mode=m;$('#b-local').setAttribute('aria-pressed',m==='local');$('#b-remote').setAttribute('aria-pressed',m==='remote');}
+$('#seed').addEventListener('keydown',e=>{if(e.key==='Enter')run();});
+$('#go').onclick=run;
+async function run(){
+  const seed=$('#seed').value.trim(); if(!seed)return;
+  const p=new URLSearchParams({seed,hops:$('#hops').value||'4',backend:mode});
+  if(mode==='remote'){p.set('url',$('#url').value);p.set('token',$('#token').value);}
+  const empty=$('#empty'); empty.hidden=false; empty.innerHTML='<div class="big"><span class="spin"></span></div><div>Mapping the blast radius…</div>';
+  try{
+    const r=await fetch('/api/analyze?'+p.toString()); const data=await r.json();
+    if(!r.ok){empty.hidden=false;empty.innerHTML='<div class="big err">No blast.</div><div class="err">'+(data.error||'Something went wrong.')+'</div>';clearAll();return;}
+    empty.hidden=true; render(data);
+  }catch(e){empty.innerHTML='<div class="big err">Server unreachable.</div><div>Is <code>shockwave-web</code> running?</div>';}
+}
+function clearAll(){svg.selectAll('*').remove();['readout','legend','epi'].forEach(i=>$('#'+i).hidden=true);$('#exp-sec').hidden=true;$('#hs-sec').hidden=true;}
+let sim;
+function render(d){
+  clearAll();
+  $('#s-aff').textContent=d.summary.affected_definitions; $('#s-files').textContent=d.summary.affected_files;
+  $('#s-hot').textContent=d.summary.hotspots; $('#s-exp').textContent=d.summary.entry_points;
+  $('#readout').hidden=false; $('#legend').hidden=false; $('#epi').hidden=false; $('#epi').innerHTML='EPICENTER&nbsp; <b>'+d.seed+'</b>';
+  const W=svg.node().clientWidth,H=svg.node().clientHeight,cx=W/2,cy=H/2;
+  const maxD=Math.max(1,d3.max(d.nodes,n=>n.depth)||1), ringGap=Math.min(W,H)/2.4/maxD;
+  const g=svg.append('g');
+  for(let i=1;i<=maxD;i++)g.append('circle').attr('class','ring').attr('cx',cx).attr('cy',cy).attr('r',i*ringGap);
+  if(!matchMedia('(prefers-reduced-motion: reduce)').matches){
+    const pulse=svg.append('circle').attr('cx',cx).attr('cy',cy).attr('r',6).attr('fill','none').attr('stroke','#FFE6A0').attr('stroke-width',2).attr('opacity',.9);
+    pulse.transition().duration(900).ease(d3.easeCubicOut).attr('r',maxD*ringGap+30).attr('opacity',0).remove();
+  }
+  const nodes=d.nodes.map(n=>({...n})), byId=new Map(nodes.map(n=>[n.id,n]));
+  const links=d.links.filter(l=>byId.has(l.source)&&byId.has(l.target)).map(l=>({...l}));
+  const parent=new Map(); links.forEach(l=>{if(!parent.has(l.source))parent.set(l.source,l.target);});
+  const rOf=n=>n.role==='epicenter'?13:4+Math.sqrt(n.fan_in||0)*2.2;
+  const link=g.append('g').selectAll('line').data(links).join('line').attr('class','link');
+  const node=g.append('g').selectAll('g').data(nodes).join('g').attr('class','node');
+  node.append('circle').attr('r',rOf)
+    .attr('fill',n=>n.role==='test'?'#39B98A':dc(n.depth))
+    .attr('opacity',n=>n.role==='test'?.5:1)
+    .attr('stroke',n=>n.role==='entry'?'#2FE6D6':(n.role==='hotspot'?'#FFB454':'rgba(0,0,0,.35)'))
+    .attr('stroke-width',n=>n.role==='entry'||n.role==='hotspot'?2.4:1)
+    .style('filter',n=>n.role==='entry'?'drop-shadow(0 0 7px #2FE6D6)':(n.role==='epicenter'?'drop-shadow(0 0 12px #FFE6A0)':'none'));
+  node.filter(n=>n.role==='epicenter'||n.role==='entry').append('text').attr('x',n=>rOf(n)+5).attr('y',4)
+    .text(n=>n.label).attr('fill',n=>n.role==='entry'?'#2FE6D6':'#FFE6A0');
+  node.on('mousemove',(e,n)=>{tip.style.opacity=1;tip.style.left=(e.clientX+14)+'px';tip.style.top=(e.clientY+14)+'px';
+    tip.innerHTML='<div>'+n.fqn+'</div><div class="f">'+n.file+' · depth '+n.depth+' · fan-in '+n.fan_in+' · '+n.role+'</div>';litePath(n.id);})
+    .on('mouseleave',()=>{tip.style.opacity=0;link.classed('lit',false);});
+  function litePath(id){const set=new Set();let cur=id,g2=0;while(cur!=null&&g2++<40){const nx=parent.get(cur);if(nx==null)break;set.add(cur+'>'+nx);cur=nx;}link.classed('lit',l=>set.has(l.source+'>'+l.target));}
+  const epi=nodes.find(n=>n.role==='epicenter'); if(epi){epi.fx=cx;epi.fy=cy;}
+  sim&&sim.stop();
+  sim=d3.forceSimulation(nodes)
+    .force('link',d3.forceLink(links).id(n=>n.id).distance(ringGap*.8).strength(.15))
+    .force('charge',d3.forceManyBody().strength(-90))
+    .force('radial',d3.forceRadial(n=>n.depth*ringGap,cx,cy).strength(.92))
+    .force('collide',d3.forceCollide(n=>rOf(n)+3))
+    .on('tick',()=>{link.attr('x1',l=>l.source.x).attr('y1',l=>l.source.y).attr('x2',l=>l.target.x).attr('y2',l=>l.target.y);node.attr('transform',n=>`translate(${n.x},${n.y})`);});
+  const expSec=$('#exp-sec'),expList=$('#exp-list'); expList.innerHTML='';$('#exp-c').textContent=d.exposure.length;expSec.hidden=d.exposure.length===0;
+  d.exposure.slice(0,40).forEach(ep=>{const el=document.createElement('div');el.className='ep';
+    const path=ep.path.map((s,i)=>i===ep.path.length-1?'<b>'+s+'</b>':s).join(' → ');
+    el.innerHTML='<div class="top"><span class="kind '+ep.kind+'">'+ep.kind+'</span><span class="nm">'+ep.entry_point+'</span></div><div class="path">'+path+'</div>';
+    el.querySelector('.nm').onclick=()=>{const t=nodes.find(n=>n.fqn===ep.entry_point);if(t){litePath(t.id);setTimeout(()=>link.classed('lit',false),1600);}};
+    expList.appendChild(el);});
+  const hsSec=$('#hs-sec'),hsList=$('#hs-list'); const hot=d.affected.filter(a=>a.is_hotspot);
+  const stubFor={}; d.suggested_tests.forEach(s=>stubFor[s.fqn]=s.code);
+  hsList.innerHTML='';$('#hs-c').textContent=hot.length;hsSec.hidden=hot.length===0;
+  hot.forEach(a=>{const el=document.createElement('div');el.className='hs';
+    const stub=stubFor[a.fqn]?'<details><summary>suggested test</summary><pre>'+esc(stubFor[a.fqn])+'</pre></details>':'';
+    el.innerHTML='<div class="top"><span class="nm">'+a.fqn+'</span><span class="meta">fan-in '+a.fan_in+' · d'+a.depth+'</span></div><div class="fp">'+a.file_path+'</div>'+stub;
+    hsList.appendChild(el);});
+}
+function esc(s){return s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+</script>
+{% endblock %}

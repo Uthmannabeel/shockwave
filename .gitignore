@@ -24,8 +24,8 @@ reports/
 !docs/**/*.html
 # keep committed demo artifacts
 !examples/**/*.html
-# the web UI's page is source, not a generated report
-!shockwave/web/*.html
+# the web UI's pages/templates are source, not generated reports
+!shockwave/web/**/*.html
 
 # Editor / OS
 .vscode/

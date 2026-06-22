@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block content %}
+<header class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <div class="eyebrow with-dot"><span class="dot"></span> Impact intelligence for code review · built on GitLab Orbit</div>
+      <h1>Know what a change <span class="grad-text">breaks</span>, before you merge.</h1>
+      <p class="sub">Shockwave reads GitLab Orbit's knowledge graph to map the full blast radius of any change — every dependent, the public entry points it's reachable from, and the high-risk code no test covers. In your terminal, on your merge requests, and in GitLab Duo.</p>
+      <div class="hero-cta">
+        <a class="btn btn-primary" href="/app">Launch the Blast Monitor →</a>
+        <a class="btn btn-ghost" href="/how">See how it works</a>
+      </div>
+      <div class="trust">Open source · <b>MIT</b> &nbsp;·&nbsp; runs on Orbit <b>Local + Remote</b> &nbsp;·&nbsp; CLI · MR bot · Duo agent</div>
+    </div>
+    <div class="panel rv">
+      <div class="panel-bar">
+        <span class="d"></span><span class="d"></span><span class="d"></span>
+        <span class="ttl">blast radius · setupmethod</span>
+        <span class="chip">reachable from @route</span>
+      </div>
+      <svg id="heroMap" aria-label="Blast radius map"></svg>
+      <div class="panel-foot">
+        <div><b>114</b><span class="l">Affected</span></div>
+        <div><b>10</b><span class="l">Files</span></div>
+        <div class="pf-hot"><b>7</b><span class="l">No-test</span></div>
+        <div class="pf-exp"><b>2</b><span class="l">Exposed</span></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap"><div class="divider"></div></div>
+
+<section>
+  <div class="wrap">
+    <p class="eyebrow rv">What it surfaces</p>
+    <h2 class="rv">Three answers reviewers actually need.</h2>
+    <p class="lead rv">Not a wall of search results — the questions you'd ask out loud in review, answered from the graph.</p>
+    <div class="grid-3 mt-lg">
+      <a class="card rv" href="/features" style="text-decoration:none">
+        <div class="ic">⚡</div><h3>Blast radius</h3>
+        <p>Every definition that transitively depends on your change, across files — ranked by fan-in and proximity.</p><span class="tag">impact</span>
+      </a>
+      <a class="card rv" href="/features" style="text-decoration:none">
+        <div class="ic">🚪</div><h3>Exposure</h3>
+        <p>Whether the change is reachable from a public entry point — with the exact call path. Externally observable, or internal-only.</p><span class="tag">reachability</span>
+      </a>
+      <a class="card rv" href="/features" style="text-decoration:none">
+        <div class="ic">🧪</div><h3>Untested hotspots</h3>
+        <p>High fan-in code no test calls directly — each with a generated pytest stub so you know what to pin down.</p><span class="tag">test coverage</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<section style="background:var(--bg-soft)">
+  <div class="wrap">
+    <p class="eyebrow rv">Where it runs</p>
+    <h2 class="rv">One graph. Five surfaces.</h2>
+    <p class="lead rv">The same analysis meets your team wherever review happens.</p>
+    <div class="surf-grid mt-lg">
+      <a class="surf rv" href="/surfaces"><div class="e">⌨️</div><h4>CLI</h4><p>In your terminal or CI.</p></a>
+      <a class="surf rv" href="/app"><div class="e">🗺️</div><h4>Blast Monitor</h4><p>Interactive impact map.</p></a>
+      <a class="surf rv" href="/surfaces"><div class="e">🤖</div><h4>MR bot</h4><p>Auto-reviews every MR.</p></a>
+      <a class="surf rv" href="/surfaces"><div class="e">✨</div><h4>Duo agent</h4><p>Ask in the AI Catalog.</p></a>
+      <a class="surf rv" href="/surfaces"><div class="e">🧩</div><h4>Skill</h4><p>Reusable Orbit recipes.</p></a>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap center">
+    <p class="eyebrow rv">Real, not a mock</p>
+    <h2 class="rv" style="margin-bottom:36px">Verifiable on day one.</h2>
+    <div class="metrics">
+      <div class="metric rv"><b class="grad-text">114</b><div class="l">defs impacted by one<br>Flask decorator</div></div>
+      <div class="metric rv"><b>2</b><div class="l">Orbit backends<br>Local + Remote</div></div>
+      <div class="metric rv"><b>5</b><div class="l">surfaces<br>CLI · web · bot · agent · skill</div></div>
+      <div class="metric rv"><b class="grad-text">MIT</b><div class="l">open source<br>18 passing tests</div></div>
+    </div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap">
+    <h2 class="rv">Stop reviewing blind.</h2>
+    <p class="lead rv">See the blast radius, the exposure, and the missing tests — before you click merge.</p>
+    <div class="hero-cta rv">
+      <a class="btn btn-primary" href="/app">Launch the Blast Monitor →</a>
+      <a class="btn btn-ghost" href="/docs">Get started</a>
+    </div>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}<script>shockwaveHero('heroMap');</script>{% endblock %}

@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Get started with Shockwave{% endblock %}
+{% block content %}
+<section class="page-head">
+  <div class="wrap">
+    <p class="eyebrow rv">Docs</p>
+    <h1 class="rv" style="font-size:clamp(32px,4vw,48px)">Get started in two minutes.</h1>
+    <p class="lead rv">Index a repo with Orbit, install Shockwave, and run your first blast-radius analysis.</p>
+  </div>
+</section>
+
+<section style="padding-top:8px">
+  <div class="wrap">
+    <div class="grid-2" style="gap:22px;align-items:start">
+      <div class="rv">
+        <h2 style="font-size:24px">1 · Index a repo with Orbit Local</h2>
+        <p class="lead" style="font-size:15px;margin-bottom:14px">Install the Orbit CLI, then index any repository into a local graph.</p>
+        <div class="code">
+          <div class="code-bar"><span class="d"></span><span class="d"></span><span class="d"></span><span style="margin-left:6px">shell</span></div>
+<pre><span class="cm"># macOS / Linux</span>
+curl -fsSL https://gitlab.com/gitlab-org/orbit/\
+knowledge-graph/-/raw/main/install.sh | bash
+
+<span class="cm"># Windows (PowerShell)</span>
+irm https://gitlab.com/gitlab-org/orbit/\
+knowledge-graph/-/raw/main/install.ps1 | iex
+
+orbit index .</pre>
+        </div>
+      </div>
+      <div class="rv">
+        <h2 style="font-size:24px">2 · Install Shockwave</h2>
+        <p class="lead" style="font-size:15px;margin-bottom:14px">Python 3.11+. The web UI is an optional extra.</p>
+        <div class="code">
+          <div class="code-bar"><span class="d"></span><span class="d"></span><span class="d"></span><span style="margin-left:6px">shell</span></div>
+<pre>pip install -e .
+
+<span class="cm"># with the Blast Monitor web UI</span>
+pip install -e ".[web]"</pre>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:34px" class="rv">
+      <h2 style="font-size:24px">3 · Analyze</h2>
+      <div class="code mt-md">
+        <div class="code-bar"><span class="d"></span><span class="d"></span><span class="d"></span><span style="margin-left:6px">shell</span></div>
+<pre><span class="cm"># impact of a symbol or file</span>
+shockwave analyze setupmethod --format md
+
+<span class="cm"># blast radius of a whole diff (great in CI)</span>
+shockwave diff main
+
+<span class="cm"># against the hosted graph — Orbit Remote</span>
+shockwave analyze compute --remote https://gitlab.com --token $GITLAB_TOKEN
+
+<span class="cm"># the interactive map</span>
+shockwave-web        <span class="cm"># → http://127.0.0.1:7777</span></pre>
+      </div>
+    </div>
+
+    <div class="grid-2 mt-lg" style="gap:22px">
+      <div class="card rv"><div class="ic">🤖</div><h3>Add the MR bot</h3>
+        <p>Drop the provided <code>.gitlab-ci.yml</code> in your project and add a masked <code>GITLAB_TOKEN</code> variable (api scope). On every merge request, the bot posts the blast-radius review. Orbit must be enabled on the group.</p>
+      </div>
+      <div class="card rv"><div class="ic">✨</div><h3>Use the Duo agent</h3>
+        <p>The agent is published in the GitLab AI Catalog — enable it in your project and ask blast-radius questions in Duo Chat.</p>
+        <p style="margin-top:12px"><a class="btn btn-ghost btn-sm" href="https://gitlab.com/explore/ai-catalog/agents/1011457/" target="_blank" rel="noopener">Open in AI Catalog →</a></p>
+      </div>
+    </div>
+
+    <p class="lead rv mt-lg" style="font-size:15px">Full source, tests, and the reusable Orbit skill are on <a class="cyan" style="text-decoration:none" href="https://github.com/Uthmannabeel/shockwave" target="_blank" rel="noopener">GitHub</a>.</p>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap">
+    <h2 class="rv">Ready?</h2>
+    <div class="hero-cta rv"><a class="btn btn-primary" href="/app">Launch the Blast Monitor →</a><a class="btn btn-ghost" href="https://github.com/Uthmannabeel/shockwave" target="_blank" rel="noopener">View the source</a></div>
+  </div>
+</section>
+{% endblock %}

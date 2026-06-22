@@ -1,4 +1,4 @@
-"""Shockwave Blast Monitor — a small local web UI for the blast map.
+"""Shockwave — local web app: a multi-page product site + the Blast Monitor.
 
 Run:  shockwave-web   (then open http://127.0.0.1:7777)
 Needs the optional web extra:  pip install -e .[web]
@@ -12,20 +12,34 @@ import sys
 from . import blast_radius, report
 from .orbit_client import LocalBackend, RemoteBackend, OrbitError, enable_os_trust
 
+PAGES = {
+    "/": ("home.html", "home"),
+    "/how": ("how.html", "how"),
+    "/features": ("features.html", "features"),
+    "/surfaces": ("surfaces.html", "surfaces"),
+    "/docs": ("docs.html", "docs"),
+    "/app": ("app.html", "app"),
+}
+
 
 def create_app():
-    from flask import Flask, request, jsonify, send_from_directory
+    from flask import Flask, request, jsonify, render_template
 
     here = os.path.dirname(__file__)
-    app = Flask(__name__, static_folder=os.path.join(here, "web"), static_url_path="")
+    app = Flask(
+        __name__,
+        template_folder=os.path.join(here, "web", "templates"),
+        static_folder=os.path.join(here, "web", "static"),
+        static_url_path="/static",
+    )
 
-    @app.get("/")
-    def index():
-        return send_from_directory(app.static_folder, "index.html")
+    def make_view(template: str, key: str):
+        def view():
+            return render_template(template, active=key)
+        return view
 
-    @app.get("/app")
-    def monitor():
-        return send_from_directory(app.static_folder, "app.html")
+    for path, (template, key) in PAGES.items():
+        app.add_url_rule(path, key, make_view(template, key))
 
     @app.get("/api/analyze")
     def analyze():
@@ -63,7 +77,7 @@ def main(argv: list[str] | None = None) -> int:
         print("Shockwave web needs Flask: pip install -e .[web]", file=sys.stderr)
         return 1
     port = int(os.environ.get("SHOCKWAVE_PORT", "7777"))
-    print(f"Shockwave Blast Monitor  →  http://127.0.0.1:{port}")
+    print(f"Shockwave  →  http://127.0.0.1:{port}")
     create_app().run(host="127.0.0.1", port=port, debug=False)
     return 0
 

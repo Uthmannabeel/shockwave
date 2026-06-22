@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Where Shockwave runs — CLI, MR bot, Duo agent, web, skill{% endblock %}
+{% block content %}
+<section class="page-head">
+  <div class="wrap">
+    <p class="eyebrow rv">Where it runs</p>
+    <h1 class="rv" style="font-size:clamp(32px,4vw,48px)">One graph. Five surfaces.</h1>
+    <p class="lead rv">Impact analysis is only useful where review actually happens. Shockwave ships as a command, a bot, an agent, a map, and a reusable skill — all reading the same Orbit graph.</p>
+  </div>
+</section>
+
+<section style="padding-top:8px">
+  <div class="wrap">
+    <div class="grid-2">
+      <div class="card rv"><div class="ic">⌨️</div><h3>Command line</h3>
+        <p><code>shockwave analyze &lt;symbol|file&gt;</code> and <code>shockwave diff &lt;ref&gt;</code> — against Orbit Local or, with <code>--remote</code>, the hosted graph. Markdown, JSON, an interactive HTML report, or a Mermaid graph.</p>
+      </div>
+      <div class="card rv"><div class="ic">🗺️</div><h3>Blast Monitor</h3>
+        <p>The interactive radial map: the change is the epicenter, impact ripples outward in depth-colored rings, and public entry points glow cyan with their call path traced to the core.</p>
+        <p style="margin-top:14px"><a class="btn btn-ghost btn-sm" href="/app">Open the Blast Monitor →</a></p>
+      </div>
+      <div class="card rv"><div class="ic">🤖</div><h3>Merge-request bot</h3>
+        <p>A GitLab CI job that, on every merge request, computes the blast radius from Orbit Remote and posts (and updates) a review comment — summary, untested hotspots, and the suggested tests.</p>
+        <p style="margin-top:14px"><a class="btn btn-ghost btn-sm" href="https://gitlab.com/uthmannabeel-group/Shockwave-project/-/merge_requests/1" target="_blank" rel="noopener">See a live comment →</a></p>
+      </div>
+      <div class="card rv"><div class="ic">✨</div><h3>GitLab Duo agent</h3>
+        <p>Published to the GitLab AI Catalog: ask <span class="mono" style="color:var(--cyan)">“what's the blast radius of X?”</span> in Duo Chat and it drives Orbit's <code>query_graph</code> tool to answer.</p>
+        <p style="margin-top:14px"><a class="btn btn-ghost btn-sm" href="https://gitlab.com/explore/ai-catalog/agents/1011457/" target="_blank" rel="noopener">View the agent →</a></p>
+      </div>
+    </div>
+    <div class="card rv" style="margin-top:22px"><div class="ic">🧩</div><h3>Orbit Reachability skill — for the ecosystem</h3>
+      <p style="max-width:780px">Orbit's traversal DSL is powerful but unforgiving: every query must be anchored, full scans are rejected, and cross-file calls are pre-resolved. We packaged the patterns we learned — the rules, ready JSON recipes, and the hop-by-hop reachability algorithm — as a reusable skill, so any Duo agent or MCP client can do correct graph reachability over Orbit without re-learning the gotchas.</p>
+    </div>
+  </div>
+</section>
+
+<section style="background:var(--bg-soft)">
+  <div class="wrap">
+    <p class="eyebrow rv">Why a knowledge graph</p>
+    <h2 class="rv">grep finds text. Orbit knows your code.</h2>
+    <div class="cmp grid-2 mt-lg">
+      <div class="col lose rv">
+        <h3>Text search</h3>
+        <ul>
+          <li>Matches a name, not a reference</li>
+          <li>Misses cross-file and inherited callers</li>
+          <li>No notion of distance, risk, or coverage</li>
+          <li>Can't tell internal from externally reachable</li>
+        </ul>
+      </div>
+      <div class="col win rv">
+        <h3>Shockwave + Orbit</h3>
+        <ul>
+          <li>Follows the resolved call &amp; inheritance graph</li>
+          <li>Transitive, cycle-safe, with hop distance</li>
+          <li>Ranks risk and flags untested hotspots</li>
+          <li>Traces the path from a public entry point to the change</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap">
+    <h2 class="rv">Pick the surface that fits your flow.</h2>
+    <div class="hero-cta rv"><a class="btn btn-primary" href="/docs">Get started →</a><a class="btn btn-ghost" href="/app">Launch the Blast Monitor</a></div>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}What Shockwave surfaces — impact, exposure, untested hotspots{% endblock %}
+{% block content %}
+<section class="page-head">
+  <div class="wrap">
+    <p class="eyebrow rv">What it surfaces</p>
+    <h1 class="rv" style="font-size:clamp(32px,4vw,48px)">Three answers reviewers actually need.</h1>
+    <p class="lead rv">Every Shockwave report leads with the questions you'd ask out loud in review — answered from the graph, ranked by risk.</p>
+  </div>
+</section>
+
+<section style="padding-top:8px">
+  <div class="wrap">
+    <div class="grid-2" style="align-items:center;gap:48px">
+      <div class="rv">
+        <p class="eyebrow">01 · Impact</p>
+        <h2>Blast radius</h2>
+        <p class="lead">The transitive set of definitions that depend on your change — following calls and inheritance across files, not just the local module. Ranked by fan-in and proximity, grouped by file, with each node's hop distance from the change.</p>
+      </div>
+      <div class="code rv">
+        <div class="code-bar"><span class="d"></span><span class="d"></span><span class="d"></span><span style="margin-left:6px">shockwave analyze setupmethod</span></div>
+<pre><span class="n">⚡ Blast radius: setupmethod</span>
+
+<span class="k">114</span> definitions across <span class="k">10</span> files depend on this change.
+<span class="cm"># grouped by file, ranked by risk…</span>
+ src/flask/sansio/scaffold.py   route, endpoint, …
+ src/flask/sansio/app.py        add_template_filter, …
+ src/flask/sansio/blueprints.py record_once, …</pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section style="background:var(--bg-soft)">
+  <div class="wrap">
+    <div class="grid-2" style="align-items:center;gap:48px">
+      <div class="code rv" style="order:2">
+        <div class="code-bar"><span class="d"></span><span class="d"></span><span class="d"></span><span style="margin-left:6px">exposure</span></div>
+<pre><span class="cm">🚪 Reachable from 2 public entry points —</span>
+<span class="cm">   a break here is externally observable.</span>
+
+<span class="s">route</span>  Scaffold.route
+       <span style="color:#2FE6D6">Scaffold.route → setupmethod</span>
+<span class="s">route</span>  Scaffold.endpoint
+       <span style="color:#2FE6D6">Scaffold.endpoint → setupmethod</span></pre>
+      </div>
+      <div class="rv" style="order:1">
+        <p class="eyebrow">02 · Reachability</p>
+        <h2>Exposure</h2>
+        <p class="lead">Is the change reachable from a public entry point — a route, an API handler, a CLI command? Shockwave traces the exact call path from the surface to your change, so you know whether a break is externally observable or strictly internal. It's the same reachability question security triage asks, applied to change risk.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="grid-2" style="align-items:center;gap:48px">
+      <div class="rv">
+        <p class="eyebrow">03 · Coverage</p>
+        <h2>Untested hotspots — with the tests</h2>
+        <p class="lead">High fan-in definitions in non-test code that no test calls directly: the code most likely to break silently. Shockwave doesn't just flag them — it generates a ready-to-fill pytest stub for each, so the review comment tells you exactly what to pin down before shipping.</p>
+      </div>
+      <div class="code rv">
+        <div class="code-bar"><span class="d"></span><span class="d"></span><span class="d"></span><span style="margin-left:6px">suggested test</span></div>
+<pre><span class="k">def</span> test_record_once_impact():
+    <span class="s">"""Cover Blueprint.record_once.
+
+    Flagged by Shockwave: 10 dependents, no test
+    calls it directly. Changing it could break
+    callers silently."""</span>
+    <span class="k">from</span> flask.sansio.blueprints <span class="k">import</span> record_once
+    <span class="cm"># TODO: call record_once(...) and assert behavior</span>
+    <span class="k">raise</span> NotImplementedError</pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap">
+    <h2 class="rv">Run it on your own code.</h2>
+    <div class="hero-cta rv"><a class="btn btn-primary" href="/app">Launch the Blast Monitor →</a><a class="btn btn-ghost" href="/surfaces">Where it runs</a></div>
+  </div>
+</section>
+{% endblock %}
