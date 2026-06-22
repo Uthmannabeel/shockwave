@@ -1,125 +1,136 @@
-# Shockwave ⚡
+<div align="center">
 
-**See the blast radius of a code change before it merges.**
+# ⚡ Shockwave
 
-Shockwave is a blast-radius impact-analysis tool built on the [GitLab Orbit](https://about.gitlab.com/gitlab-orbit/) knowledge graph. Point it at a changed function, file, or git diff and it traverses Orbit's resolved code graph — calls, imports, and inheritance — to show you *everything* a change can ripple into: every caller, the tests that should re-run, and the highest-risk call sites **that no test touches directly**, ranked.
+### Know what a change breaks — *before* you merge.
 
-> Built for the **GitLab Transcend Hackathon** (Showcase track).
->
-> 🟢 **Live in the GitLab AI Catalog:** [Shockwave Blast Radius agent](https://gitlab.com/explore/ai-catalog/agents/1011457/)
+Impact intelligence for code review, built on the **[GitLab Orbit](https://about.gitlab.com/gitlab-orbit/)** knowledge graph.
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-3776AB.svg)](pyproject.toml)
+[![Tests](https://img.shields.io/badge/tests-23%20passing-3FB950.svg)](tests/)
+[![Built on GitLab Orbit](https://img.shields.io/badge/built%20on-GitLab%20Orbit-FC6D26.svg)](https://about.gitlab.com/gitlab-orbit/)
+[![GitLab Transcend](https://img.shields.io/badge/GitLab-Transcend%20Hackathon-FC6D26.svg)](https://gitlab-transcend.devpost.com/)
+
+**[Live Blast Monitor](#-the-blast-monitor) · [AI Catalog agent](https://gitlab.com/explore/ai-catalog/agents/1011457/) · [Live MR-bot comment](https://gitlab.com/uthmannabeel-group/Shockwave-project/-/merge_requests/1)**
+
+![Shockwave Blast Monitor](docs/img/blast-monitor.png)
+
+</div>
 
 ---
 
-## Why
+## The problem
 
-Reviewers approve changes blind to ripple effects. `grep` can't follow a resolved cross-file call graph; Orbit already built one. Shockwave turns that graph into an answer to the only question that matters in review: **"if I change this, what breaks?"**
+Every reviewer has approved a one-line change that quietly broke something three files away. The honest question in review — *“if I change this, what actually breaks?”* — is one `grep` can't answer, because the answer lives in the **resolved call graph**, not in text. GitLab Orbit already builds that graph. **Shockwave turns it into the answer** — and then acts on it.
 
-## What it does
+## What it surfaces
 
-- **`shockwave analyze <symbol|file>`** — transitive inbound impact set (callers → callers-of-callers …), ranked by risk.
-- **`shockwave diff <gitref>`** — blast radius of every symbol changed in a diff. The reviewer's killer feature.
-- **Exposure analysis** — tells you whether the change is **reachable from a public entry point** (route / API / CLI / `main`), *with the call path* — so you know if a break is externally observable or internal-only. (The same reachability question security triage asks.)
-- **Reports** — ranked Markdown, a Mermaid graph, and a self-contained HTML view.
-- **Risk scoring** — flags high fan-in call sites with **no direct test**, and generates pytest stubs for them.
-- **MR bot** — a GitLab CI job that auto-posts the blast-radius review on every merge request ([`.gitlab-ci.yml`](.gitlab-ci.yml) + [`shockwave/ci_bot.py`](shockwave/ci_bot.py)).
-- **AI Catalog agent** — ask *"what's the blast radius of `<symbol>`?"* in GitLab Duo (uses Orbit Remote's `query_graph`).
+Point Shockwave at a function, file, or merge-request diff and it traverses Orbit's graph to tell you:
 
-## How it works
+| | | |
+|---|---|---|
+| ⚡ **Blast radius** | Every definition that transitively depends on the change, across files, ranked by fan-in × proximity. | *impact* |
+| 🚪 **Exposure** | Whether the change is **reachable from a public entry point** (route / API / CLI), *with the call path* — externally observable or internal-only. | *reachability* |
+| 🧪 **Untested hotspots** | High fan-in code **no test calls directly** — each with a generated **pytest stub** so you know what to pin down. | *coverage* |
+| 🚦 **Risk verdict** | One **LOW / REVIEW / HIGH** score from all the signals — the MR bot leads with it and can gate the merge. | *decision* |
+| ✅ **Test impact selection** | The tests that *actually exercise* the change, as a copy-paste `pytest …` command. Run those, not the whole suite. | *CI speed* |
+| 🔗 **Outbound dependencies** | The flip side of impact: what the change *relies on*. | *completeness* |
 
-```
-seed symbol/file ─▶ resolve to gl_definition ─▶ transitive inbound closure
-                    over gl_edge (CALLS + cross-file via ImportedSymbol + EXTENDS)
-                    ─▶ risk score + direct-test flag ─▶ report / graph
-```
+> It never guesses — it reports only what the graph returns, flags its own caveats (partial results, ambiguous names, permission scope), and shows the indexed commit.
 
-Orbit Local indexes a repo into a DuckDB graph (`~/.orbit/graph.duckdb`); Shockwave pulls the call/import edges via `orbit sql` and walks them in Python (cycle-safe BFS). Against **Orbit Remote** it does the same walk over the REST query API (`shockwave analyze --remote`), which the MR bot and AI Catalog agent use.
+## 🧭 One graph, five surfaces
 
-See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+The same analysis meets your team wherever review happens:
 
-## See it in action
+- **CLI** — `shockwave analyze <symbol|file>` and `shockwave diff <ref>`, against Orbit **Local** or, with `--remote`, the hosted graph. Markdown / JSON / HTML / Mermaid.
+- **Blast Monitor** — the interactive web map (below).
+- **Merge-request bot** — a GitLab CI job that auto-posts (and updates) the review on every MR. → [see a live comment](https://gitlab.com/uthmannabeel-group/Shockwave-project/-/merge_requests/1)
+- **GitLab Duo agent** — ask *“what's the blast radius of X?”* in the AI Catalog. → [view the agent](https://gitlab.com/explore/ai-catalog/agents/1011457/)
+- **Orbit Reachability skill** — reusable DSL recipes so any agent can query Orbit correctly. → [`skills/orbit-reachability`](skills/orbit-reachability/SKILL.md)
 
-Run against **Flask** (`pallets/flask`, ~1,650 definitions), asking what depends
-on `setupmethod` — a one-line internal decorator:
+## 🗺️ The Blast Monitor
 
-```text
-$ shockwave analyze setupmethod --max-hops 4
+A radial **blast map**: the changed symbol is the epicenter, impact ripples outward in depth-colored rings, public **entry points glow cyan** with their call path traced to the core, and the rail shows the risk verdict, the tests to run, and the untested hotspots. Light and dark themes.
 
-# ⚡ Blast radius: `src.flask.sansio.scaffold.setupmethod`
-
-**114** definitions across **10** files depend on this change.
- 🔥 **7** high-impact hotspot(s) with **no direct test** need review.
- 🚪 Reachable from **2** public entry point(s) — incl. `Scaffold.route` (`Scaffold.route → setupmethod`).
-
-## 🔥 Hotspots with no direct test (review first)
-| Definition                                   | File                           | Depth | Fan-in | Risk |
-| -------------------------------------------- | ------------------------------ | ----: | -----: | ---: |
-| `Blueprint.record_once`                      | src/flask/sansio/blueprints.py |     1 |     10 | 20.0 |
-| `Scaffold._method_route`                     | src/flask/sansio/scaffold.py   |     2 |      5 |  5.0 |
-| `App.add_template_filter`                    | src/flask/sansio/app.py        |     1 |      2 |  4.0 |
-```
-
-Full reports (Markdown / HTML / JSON) are in [`examples/flask/`](examples/flask).
-
-## Quick start
-
-```bash
-# 1. Install Orbit Local  (Windows)
-irm https://gitlab.com/gitlab-org/orbit/knowledge-graph/-/raw/main/install.ps1 | iex
-#    (macOS/Linux)
-curl -fsSL "https://gitlab.com/gitlab-org/orbit/knowledge-graph/-/raw/main/install.sh" | bash
-
-# 2. Index a repo
-orbit index /path/to/repo
-
-# 3. Install + run Shockwave
-pip install -e .
-shockwave analyze setupmethod --format md
-```
-
-### The Blast Monitor (web UI)
+![Shockwave landing page](docs/img/landing.png)
 
 ```bash
 pip install -e ".[web]"
 shockwave-web            # → http://127.0.0.1:7777
 ```
 
-A radial **blast map**: the changed symbol is the epicenter, impact ripples
-outward in depth-colored rings, public **entry points glow cyan** with their call
-path traced back to the core, and a side rail lists exposure paths and hotspots
-(with the generated test stubs).
+## 🚀 Quick start
 
-### Against Orbit Remote (the hosted graph)
+```bash
+# 1. Install Orbit Local
+#    macOS / Linux
+curl -fsSL "https://gitlab.com/gitlab-org/orbit/knowledge-graph/-/raw/main/install.sh" | bash
+#    Windows (PowerShell)
+irm https://gitlab.com/gitlab-org/orbit/knowledge-graph/-/raw/main/install.ps1 | iex
 
-Shockwave also runs against **Orbit Remote** over its REST API — no local index
-needed. Because Remote forbids full-graph scans, the blast radius is computed by
-*iterative anchored traversal* (one query per hop):
+# 2. Index a repo
+orbit index /path/to/repo
+
+# 3. Install + analyze
+pip install -e .
+shockwave analyze <a-function-in-your-repo> --format md
+shockwave diff main                       # blast radius of a whole diff
+```
+
+**Against Orbit Remote** (the hosted graph — no local index needed):
 
 ```bash
 shockwave analyze compute --remote https://gitlab.com --token "$GITLAB_TOKEN"
 ```
 
-Example (live `gitlab.com` graph of this very repo):
+Because Remote forbids full-graph scans, the radius is computed by *iterative anchored traversal* — one query per hop. The MR bot and Duo agent use this path.
+
+## See it in action
+
+Asking **Flask** (`pallets/flask`, ~1,650 definitions) what depends on `setupmethod` — a one-line internal decorator:
 
 ```text
-# ⚡ Blast radius: `shockwave.blast_radius.compute`
-**9** definitions across **2** files depend on this change.
-  shockwave/cli.py · main
-  tests/test_blast_radius.py · test_depths, test_cycle_terminates, …
+🚦 Risk: HIGH (100/100) · 7 untested hotspots · reachable from 2 public entry points
+⚡ 114 definitions across 10 files depend on this change.
+🚪 Reachable from Scaffold.route  (Scaffold.route → setupmethod)
+✅ 58 tests exercise it:  pytest tests/test_blueprints.py::test_add_template_filter  …
 ```
 
-## Reusable for the ecosystem
+Full reports (Markdown / HTML / JSON) are in [`examples/flask/`](examples/flask).
 
-Getting Orbit's traversal DSL right is non-obvious (every query must be anchored;
-no full scans; cross-file calls are pre-resolved). We packaged what we learned as
-a reusable **[Orbit Reachability skill](skills/orbit-reachability/SKILL.md)** —
-DSL rules + ready JSON recipes + the hop-by-hop transitive-reachability algorithm
-— so any Duo agent or MCP client can do correct graph reachability over Orbit
-(for code today, any entity/edge tomorrow) without re-learning the gotchas.
+## 🏗️ How it works
 
-## Status
+```
+seed symbol/file ─▶ resolve to Definition node(s) ─▶ cycle-safe inbound BFS
+                    over CALLS + EXTENDS edges ─▶ rank · expose · verdict ·
+                    select tests ─▶ report / graph
+```
 
-🚧 Built for the hackathon. See the build plan and `docs/`.
+Orbit **Local** is a DuckDB graph queried via `orbit sql`; **Remote** is the hosted graph queried over the JSON traversal DSL. Same walk, same answers. Details in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
-## License
+## ⚠️ What it is — and isn't
 
-[MIT](LICENSE)
+A tool you can trust states its edges:
+
+- **Static analysis.** Follows resolved `CALLS`/`EXTENDS` edges — dynamic dispatch, reflection, callbacks, and config-wired calls are invisible; value/constant and non-code changes fall outside the code graph.
+- **Signals, not guarantees.** “No *direct* test”, exposure, and the risk score are heuristics (word-boundary matched, not naïve substrings).
+- **Bounded by Orbit.** Results reflect Orbit's index — default branch, supported languages, and on Remote only code your token can see (so a radius can be partial). No cross-repo graph yet; depth is capped; large fan-outs may truncate — Shockwave **tells you** when a result is partial.
+- **Security reachability** (ranking vulnerabilities by reachability) is the roadmap headline — it needs a join with GitLab's Vulnerability API.
+
+## 🧪 Tests
+
+```bash
+pip install -e ".[dev]"
+pytest            # 23 tests — algorithm, remote BFS, risk, exposure, test selection
+```
+
+## 📄 License
+
+Released under the **MIT License** — © 2026 Nabeel Uthman. See [`LICENSE`](LICENSE) for the full text. Free to use, modify, and distribute.
+
+---
+
+<div align="center">
+Built for the <b>GitLab Transcend Hackathon</b> · powered by <a href="https://about.gitlab.com/gitlab-orbit/">GitLab Orbit</a>
+</div>
