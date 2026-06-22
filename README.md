@@ -73,8 +73,20 @@ orbit index /path/to/repo
 
 # 3. Install + run Shockwave
 pip install -e .
-shockwave analyze process_payment --format md
+shockwave analyze setupmethod --format md
 ```
+
+### The Blast Monitor (web UI)
+
+```bash
+pip install -e ".[web]"
+shockwave-web            # → http://127.0.0.1:7777
+```
+
+A radial **blast map**: the changed symbol is the epicenter, impact ripples
+outward in depth-colored rings, public **entry points glow cyan** with their call
+path traced back to the core, and a side rail lists exposure paths and hotspots
+(with the generated test stubs).
 
 ### Against Orbit Remote (the hosted graph)
 
