@@ -29,7 +29,7 @@ HEADER = f"{MARKER}\n## 🤖⚡ Shockwave — blast-radius review\n\n"
 MAX_BODY = 60_000  # keep comments well under GitLab's note limit
 FOOTER = (
     "\n\n---\n*Computed from the [GitLab Orbit](https://about.gitlab.com/gitlab-orbit/) "
-    "knowledge graph by [Shockwave](https://github.com/Uthmannabeel/shockwave). "
+    "knowledge graph by [Shockwave](https://gitlab.com/uthmannabeel-group/Shockwave-project). "
     "Indexed facts, not guesses.*"
 )
 
