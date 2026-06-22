@@ -22,6 +22,11 @@ Point Shockwave at a function, file, or merge-request diff and it traverses Orbi
 - **flags hotspots with no direct test** — high-impact code that no test calls directly, the stuff most likely to break silently, and
 - **generates a pytest stub** for each one, so you know exactly what to pin down first.
 
+Then it acts on the answer:
+- a **Risk verdict** — one `LOW / REVIEW / HIGH` score (from blast size, depth, exposure, and untested hotspots) that the MR bot leads with and can gate on;
+- **test impact selection** — the tests that *actually exercise the change*, as a copy-paste `pytest …` command (run those, not the whole suite — predictive test selection straight from the graph); and
+- **outbound dependencies** — the flip side of impact: what the change *relies on*.
+
 It ships in three forms:
 1. **CLI** — `shockwave analyze <symbol|file>` and `shockwave diff <ref>`, against **Orbit Local** *or* **Orbit Remote** (`--remote`). Outputs Markdown, an interactive HTML/Mermaid graph, or JSON.
 2. **MR bot** — a GitLab CI job that, on every merge request, auto-posts the blast-radius review as a comment (computed from the live Orbit Remote graph). *Intelligent orchestration, now with context.*

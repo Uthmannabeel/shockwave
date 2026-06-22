@@ -1,6 +1,6 @@
 """Algorithm tests on a hand-built fixture graph (no Orbit needed)."""
 
-from shockwave import blast_radius, report, risk, stubs, reach
+from shockwave import blast_radius, report, risk, stubs, reach, testimpact
 
 
 # Fixture: caller depends on callee.  Includes a cycle (6<->7), a test-file
@@ -20,13 +20,19 @@ IMPACTS = [
 ]
 
 
+def _fake_sql(query, impacts, defs):
+    if "UNION ALL" in query:                 # inbound impacts adjacency
+        return [{"callee": c, "caller": k} for c, k in impacts]
+    if "source_id IN" in query:              # outbound deps (none in fixtures)
+        return []
+    if "gl_definition" in query:             # definitions
+        return defs
+    raise AssertionError(f"unexpected query: {query}")
+
+
 class FakeBackend:
     def sql(self, query: str):
-        if "UNION ALL" in query:
-            return [{"callee": c, "caller": k} for c, k in IMPACTS]
-        if "gl_definition" in query:
-            return DEFS
-        raise AssertionError(f"unexpected query: {query}")
+        return _fake_sql(query, IMPACTS, DEFS)
 
 
 def test_resolves_seed_and_affected_set():
@@ -101,6 +107,21 @@ def test_exposure_entry_points_and_path():
     assert "helper_b" not in eps
 
 
+def test_test_impact_selection():
+    r = blast_radius.compute(FakeBackend(), "process_payment", max_hops=5)
+    tests = testimpact.tests_for(r)
+    # the test that calls process_payment is selected; non-test callers are not
+    assert "tests/test_pay.py::test_payment" in [t.node_id for t in tests]
+    assert testimpact.pytest_command(tests).startswith("pytest ")
+
+
+def test_verdict_bands():
+    r = blast_radius.compute(FakeBackend(), "process_payment", max_hops=5)
+    v = risk.verdict(r)
+    assert v.band in {"LOW", "REVIEW", "HIGH"}
+    assert 0 <= v.score <= 100 and v.reasons
+
+
 def test_clean_path_strips_only_dot_slash_prefix():
     assert blast_radius._clean_path("./a/b.py") == "a/b.py"
     assert blast_radius._clean_path("a\\b.py") == "a/b.py"
@@ -141,7 +162,7 @@ def test_fqn_seed_does_not_conflate_same_names():
 
     class FB:
         def sql(self, q):
-            return ([{"callee": c, "caller": k} for c, k in impacts] if "UNION ALL" in q else defs)
+            return _fake_sql(q, impacts, defs)
 
     # fully-qualified seed resolves to exactly one definition (no conflation)
     r = blast_radius.compute(FB(), "a.run", max_hops=3)
@@ -159,8 +180,7 @@ def test_mermaid_and_html_escape_special_chars():
 
     class FB:
         def sql(self, q):
-            return ([{"callee": c, "caller": k} for c, k in impacts]
-                    if "UNION ALL" in q else defs)
+            return _fake_sql(q, impacts, defs)
 
     r = blast_radius.compute(FB(), "op<T>", max_hops=3)
     merm = report.to_mermaid(r)
@@ -201,6 +221,12 @@ class FakeRemoteBackend:
 
     def callers_by_ids(self, ids):
         return self._result({int(i) for i in ids})
+
+    def callees_by_ids(self, ids):
+        ids = {int(i) for i in ids}
+        es = [(c, k) for (c, k) in self.edges if c in ids]  # outbound: caller in ids
+        nodes = {i: self.nodes[i] for c, k in es for i in (c, k) if i in self.nodes}
+        return nodes, es
 
 
 def test_remote_affected_and_depths():

@@ -67,6 +67,8 @@ class BlastRadius:
     parents: dict[int, int] = field(default_factory=dict)
     # caveats worth showing the user (partial results, permission scoping, …)
     warnings: list[str] = field(default_factory=list)
+    # direct outbound dependencies of the seed — what the change relies on
+    dependencies: list[DefMeta] = field(default_factory=list)
 
     @property
     def commit(self) -> str:
@@ -150,6 +152,60 @@ def fetch_definitions(backend: OrbitBackend) -> dict[int, DefMeta]:
             commit_sha=r.get("commit_sha") or "",
         )
     return out
+
+
+def _outbound_query_local(seed_ids: set[int]) -> str:
+    """Direct callees (outbound deps) of the seed ids: Def->Def + import bridge."""
+    s = schema
+    ids = ",".join(str(int(i)) for i in seed_ids)
+    basename = "regexp_replace(d.file_path, '(^.*/)|(\\.[^.]+$)', '', 'g')"
+    dotted = "replace(d.file_path, '/', '.')"
+    direct = (
+        f"SELECT e.{s.EDGE_TARGET} AS callee FROM {s.EDGE} e "
+        f"WHERE e.{s.EDGE_SOURCE} IN ({ids}) "
+        f"AND e.{s.EDGE_KIND} IN ('{s.CALLS}','{s.EXTENDS}') "
+        f"AND e.{s.EDGE_SOURCE_KIND} = '{s.KIND_DEFINITION}' "
+        f"AND e.{s.EDGE_TARGET_KIND} = '{s.KIND_DEFINITION}'"
+    )
+    via = (
+        f"SELECT d.{s.DEF_ID} AS callee FROM {s.EDGE} e "
+        f"JOIN {s.IMPORTED_SYMBOL} sym ON sym.{s.DEF_ID} = e.{s.EDGE_TARGET} "
+        f"JOIN {s.DEFINITION} d ON d.{s.DEF_NAME} = sym.{s.IMP_IDENTIFIER} "
+        f"AND (sym.{s.IMP_PATH} IS NULL OR sym.{s.IMP_PATH} = '' "
+        f"OR {dotted} LIKE '%' || sym.{s.IMP_PATH} || '%' "
+        f"OR sym.{s.IMP_PATH} LIKE '%' || {basename} || '%') "
+        f"WHERE e.{s.EDGE_SOURCE} IN ({ids}) AND e.{s.EDGE_KIND} = '{s.CALLS}' "
+        f"AND e.{s.EDGE_SOURCE_KIND} = '{s.KIND_DEFINITION}' "
+        f"AND e.{s.EDGE_TARGET_KIND} = '{s.KIND_IMPORTED_SYMBOL}'"
+    )
+    return f"{direct} UNION {via}"
+
+
+def direct_dependencies_local(backend, seed_ids, defs: dict[int, DefMeta]) -> list[DefMeta]:
+    if not seed_ids:
+        return []
+    seed_set = set(seed_ids)
+    out: dict[int, DefMeta] = {}
+    for r in backend.sql(_outbound_query_local(seed_set)):
+        cid = int(r["callee"])
+        if cid in seed_set or cid not in defs:
+            continue
+        out[cid] = defs[cid]
+    return sorted(out.values(), key=lambda m: (m.file_path, m.fqn or m.name))
+
+
+def direct_dependencies_remote(backend, seed_ids, defs: dict[int, DefMeta]) -> list[DefMeta]:
+    if not seed_ids:
+        return []
+    seed_set = set(seed_ids)
+    nodes, edges = backend.callees_by_ids(list(seed_set))
+    for nid, nd in nodes.items():
+        defs.setdefault(nid, _meta_from_remote(nd))
+    callee_ids = {callee for caller, callee in edges if callee not in seed_set}
+    return sorted(
+        (defs[i] for i in callee_ids if i in defs),
+        key=lambda m: (m.file_path, m.fqn or m.name),
+    )
 
 
 def fetch_inbound(backend: OrbitBackend) -> dict[int, set[int]]:
@@ -263,7 +319,9 @@ def compute(backend: OrbitBackend, seed: str, max_hops: int = 5) -> BlastRadius:
     defs = fetch_definitions(backend)
     inbound = fetch_inbound(backend)
     seeds_meta = resolve_seed(seed, defs)
-    return _walk(seed, seeds_meta, defs, inbound, max_hops)
+    radius = _walk(seed, seeds_meta, defs, inbound, max_hops)
+    radius.dependencies = direct_dependencies_local(backend, radius.seed_ids, defs)
+    return radius
 
 
 REMOTE_HOP_LIMIT = 2000  # heuristic: a hop this big may be capped by Orbit
@@ -369,6 +427,7 @@ def compute_remote(backend, seed: str, max_hops: int = 5) -> BlastRadius:
         )
     affected = [AffectedNode(meta=defs[i], depth=dep) for i, dep in depth.items() if i in defs]
     affected.sort(key=lambda a: (a.depth, a.file_path, a.fqn))
+    dependencies = direct_dependencies_remote(backend, seed_ids, defs)
     return BlastRadius(
         seed=seed,
         seed_ids=sorted(seed_ids),
@@ -378,6 +437,7 @@ def compute_remote(backend, seed: str, max_hops: int = 5) -> BlastRadius:
         inbound=inbound,
         parents=parents,
         warnings=warnings,
+        dependencies=dependencies,
     )
 
 

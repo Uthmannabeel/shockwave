@@ -168,6 +168,30 @@ class RemoteBackend:
     def callers_by_ids(self, node_ids: list[int]):
         return self._callers({"node_ids": [int(i) for i in node_ids]})
 
+    def callees_by_ids(self, node_ids: list[int]):
+        """Outbound: what the given definitions call (edges are caller→callee)."""
+        nodes: dict[int, dict] = {}
+        edges: list[tuple[int, int]] = []
+        anchor = {"node_ids": [int(i) for i in node_ids]}
+        for edge_type in self.INBOUND_EDGE_TYPES:
+            query = {
+                "query_type": "traversal",
+                "nodes": [
+                    {"id": "caller", "entity": "Definition", **anchor},
+                    {"id": "callee", "entity": "Definition"},
+                ],
+                "relationships": [{"type": edge_type, "from": "caller", "to": "callee"}],
+            }
+            try:
+                result = self._query(query)
+            except OrbitError:
+                continue
+            for node in result.get("nodes", []):
+                nodes[int(node["id"])] = node
+            for edge in result.get("edges", []):
+                edges.append((int(edge["from_id"]), int(edge["to_id"])))
+        return nodes, edges
+
     def sql(self, query: str) -> list[dict[str, Any]]:  # pragma: no cover
         raise OrbitError(
             "RemoteBackend speaks the JSON DSL, not SQL. Blast radius on Orbit "

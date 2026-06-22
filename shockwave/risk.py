@@ -97,3 +97,42 @@ def score(radius: BlastRadius) -> list[RiskedNode]:
 
 def hotspots(radius: BlastRadius) -> list[RiskedNode]:
     return [r for r in score(radius) if r.is_hotspot]
+
+
+@dataclass
+class Verdict:
+    score: int          # 0–100 (heuristic)
+    band: str           # LOW | REVIEW | HIGH
+    reasons: list[str]
+
+
+def verdict(radius: BlastRadius) -> Verdict:
+    """A single change-risk verdict, combining the signals into one call.
+
+    Heuristic, not a guarantee: untested hotspots and reachable public entry
+    points dominate (a break there is silent and externally observable); size and
+    depth add weight; existing tests that exercise the change reduce it.
+    """
+    from . import reach, testimpact  # lazy to avoid an import cycle
+
+    ranked = score(radius)
+    hot = sum(1 for r in ranked if r.is_hotspot)
+    entries = len(reach.entry_points(radius))
+    affected = len(radius.affected)
+    max_depth = max((a.depth for a in radius.affected), default=0)
+    tests = len(testimpact.tests_for(radius))
+
+    s = 12 * hot + 10 * entries + min(20.0, affected * 0.4) + 3 * max_depth
+    s -= min(15.0, tests * 2.0)
+    s = max(0, min(100, round(s)))
+    band = "LOW" if s < 30 else ("REVIEW" if s < 65 else "HIGH")
+
+    reasons: list[str] = []
+    if hot:
+        reasons.append(f"{hot} untested hotspot(s)")
+    if entries:
+        reasons.append(f"reachable from {entries} public entry point(s)")
+    reasons.append(f"{affected} definition(s) affected, depth {max_depth}")
+    if tests:
+        reasons.append(f"{tests} test(s) already exercise it")
+    return Verdict(score=s, band=band, reasons=reasons)

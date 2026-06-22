@@ -22,6 +22,9 @@ from .blast_radius import BlastRadius
 from . import risk as risk_mod
 from . import stubs as stubs_mod
 from . import reach as reach_mod
+from . import testimpact as ti_mod
+
+_BAND_EMOJI = {"LOW": "🟢", "REVIEW": "🟡", "HIGH": "🔴"}
 
 
 def _seed_label(radius: BlastRadius) -> str:
@@ -45,6 +48,12 @@ def to_markdown(radius: BlastRadius) -> str:
     if not radius.seed_ids:
         lines.append(f"> No definition matched `{radius.seed}` in the indexed graph.")
         return "\n".join(lines)
+    v = risk_mod.verdict(radius)
+    lines.append(
+        f"### {_BAND_EMOJI.get(v.band, '⚪')} Risk: **{v.band}** ({v.score}/100)"
+    )
+    lines.append(f"<sub>{' · '.join(v.reasons)}</sub>")
+    lines.append("")
     if len(radius.affected) == 0:
         lines.append(f"Nothing in the graph depends on `{_seed_label(radius)}` — empty blast radius. ✅")
     else:
@@ -110,6 +119,25 @@ def to_markdown(radius: BlastRadius) -> str:
             lines.append("</details>")
             lines.append("")
 
+    tests = ti_mod.tests_for(radius)
+    if tests:
+        lines.append(f"## ✅ Tests to run ({len(tests)}) — only what exercises this change")
+        lines.append("")
+        lines.append("```bash")
+        lines.append(ti_mod.pytest_command(tests))
+        lines.append("```")
+        lines.append("")
+
+    if radius.dependencies:
+        deps = radius.dependencies
+        lines.append(f"## 🔗 This change relies on ({len(deps)})")
+        lines.append("")
+        for m in deps[:20]:
+            lines.append(f"- `{m.fqn or m.name}` — `{m.file_path}`")
+        if len(deps) > 20:
+            lines.append(f"- …and {len(deps) - 20} more")
+        lines.append("")
+
     lines.append("## Affected definitions by file")
     lines.append("")
     by_file: dict[str, list] = defaultdict(list)
@@ -162,10 +190,21 @@ def to_mermaid(radius: BlastRadius) -> str:
 
 def to_dict(radius: BlastRadius) -> dict:
     ranked = risk_mod.score(radius)
+    v = risk_mod.verdict(radius)
+    tests = ti_mod.tests_for(radius)
     return {
         "seed": radius.seed,
         "commit": radius.commit,
         "warnings": list(radius.warnings),
+        "verdict": {"score": v.score, "band": v.band, "reasons": v.reasons},
+        "tests_to_run": {
+            "count": len(tests),
+            "command": ti_mod.pytest_command(tests),
+            "tests": [{"node_id": t.node_id, "fqn": t.fqn, "file_path": t.file_path} for t in tests],
+        },
+        "dependencies": [
+            {"fqn": m.fqn or m.name, "file_path": m.file_path} for m in radius.dependencies
+        ],
         "resolved": [
             {"id": m.id, "fqn": m.fqn or m.name, "file_path": m.file_path}
             for m in radius.seeds_meta
@@ -262,6 +301,9 @@ def to_graph(radius: BlastRadius) -> dict:
         "seed": _seed_label(radius),
         "commit": radius.commit,
         "warnings": list(radius.warnings),
+        "verdict": d["verdict"],
+        "tests_to_run": d["tests_to_run"],
+        "dependencies": d["dependencies"],
         "summary": d["summary"],
         "nodes": nodes,
         "links": links,

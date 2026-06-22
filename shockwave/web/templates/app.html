@@ -34,6 +34,20 @@
     background:rgba(20,12,4,.78);border:1px solid #5a431f;color:#FFD18A;border-radius:8px;padding:8px 12px;
     font-family:var(--mono);font-size:11px;line-height:1.5}
   .warnbar div+div{margin-top:4px}
+  .verdict{position:absolute;left:50%;top:16px;transform:translateX(-50%);z-index:6;display:flex;align-items:center;gap:10px;
+    background:rgba(8,12,22,.82);border:1px solid #26324F;border-radius:30px;padding:7px 16px}
+  .verdict .band{font-family:var(--disp);font-weight:700;font-size:14px;letter-spacing:.04em}
+  .verdict .score{font-family:var(--mono);font-size:12px;color:#9BA7C2}
+  .verdict.LOW{box-shadow:0 0 0 1px rgba(57,185,138,.4)} .verdict.LOW .band{color:#39B98A}
+  .verdict.REVIEW{box-shadow:0 0 0 1px rgba(255,180,84,.4)} .verdict.REVIEW .band{color:#FFB454}
+  .verdict.HIGH{box-shadow:0 0 0 1px rgba(255,92,108,.5)} .verdict.HIGH .band{color:#FF5C6C}
+  .trcmd{background:#0A0F1B;border:1px solid #1B2540;border-radius:8px;padding:9px;margin-bottom:8px;position:relative}
+  .trcmd code{font-family:var(--mono);font-size:11px;color:#86E1C8;word-break:break-all;display:block;max-height:120px;overflow:auto}
+  .trcmd button{position:absolute;top:6px;right:6px;background:var(--elevated);border:1px solid var(--border);color:var(--muted);
+    border-radius:6px;font-size:10px;font-family:var(--mono);padding:2px 7px;cursor:pointer}
+  .trcmd button:hover{color:var(--text)}
+  .tritem,.depitem{font-family:var(--mono);font-size:11.5px;color:var(--muted);padding:5px 0;border-bottom:1px solid var(--border);word-break:break-all}
+  .depitem b{color:var(--text);font-weight:500}
   .ring{fill:none;stroke:#16203a}
   .node{cursor:pointer}
   .node text{font-family:var(--mono);font-size:10px;fill:#9BA7C2;pointer-events:none}
@@ -91,6 +105,7 @@
         <div class="stat hot"><div class="n" id="s-hot">0</div><div class="l">No-test</div></div>
         <div class="stat exp"><div class="n" id="s-exp">0</div><div class="l">Exposed</div></div>
       </div>
+      <div class="verdict" id="verdict" hidden></div>
       <div class="legend" id="legend" hidden>
         <span>epicenter <i style="background:#FFE6A0"></i></span>
         <span>depth 1–4+ <i style="background:#FF6F5E"></i><i style="background:#E0479E"></i><i style="background:#A85FE6"></i><i style="background:#6E78F2"></i></span>
@@ -110,6 +125,15 @@
       <section id="exp-sec" hidden>
         <h2>🚪 Exposure <span class="c" id="exp-c">0</span></h2>
         <div id="exp-list"></div>
+      </section>
+      <section id="tr-sec" hidden style="margin-top:22px">
+        <h2>✅ Tests to run <span class="c" id="tr-c">0</span></h2>
+        <div id="tr-cmd"></div>
+        <div id="tr-list"></div>
+      </section>
+      <section id="dep-sec" hidden style="margin-top:22px">
+        <h2>🔗 Relies on <span class="c" id="dep-c">0</span></h2>
+        <div id="dep-list"></div>
       </section>
       <section id="hs-sec" hidden style="margin-top:22px">
         <h2>🔥 Hotspots &amp; tests <span class="c" id="hs-c">0</span></h2>
@@ -143,7 +167,7 @@ async function run(){
     empty.hidden=true; render(data);
   }catch(e){empty.innerHTML='<div class="big err">Server unreachable.</div><div>Is <code>shockwave-web</code> running?</div>';}
 }
-function clearAll(){svg.selectAll('*').remove();['readout','legend','epi','warnbar'].forEach(i=>$('#'+i).hidden=true);$('#exp-sec').hidden=true;$('#hs-sec').hidden=true;}
+function clearAll(){svg.selectAll('*').remove();['readout','legend','epi','warnbar','verdict'].forEach(i=>$('#'+i).hidden=true);['exp-sec','hs-sec','tr-sec','dep-sec'].forEach(i=>$('#'+i).hidden=true);}
 let sim;
 function render(d){
   clearAll();
@@ -152,6 +176,12 @@ function render(d){
   $('#readout').hidden=false; $('#legend').hidden=false; $('#epi').hidden=false;
   $('#epi').innerHTML='EPICENTER&nbsp; <b>'+d.seed+'</b>'+(d.commit?' &nbsp;·&nbsp; graph @ '+d.commit.slice(0,8):'');
   const wb=$('#warnbar'); if(d.warnings&&d.warnings.length){wb.hidden=false;wb.innerHTML=d.warnings.map(w=>'<div>⚠ '+esc(w)+'</div>').join('');}else{wb.hidden=true;}
+  const vd=$('#verdict'); if(d.verdict){vd.hidden=false;vd.className='verdict '+d.verdict.band;vd.innerHTML='<span class="band">'+d.verdict.band+' RISK</span><span class="score">'+d.verdict.score+'/100</span>';}else vd.hidden=true;
+  const tt=d.tests_to_run||{tests:[],command:'',count:0}; $('#tr-c').textContent=tt.count; $('#tr-sec').hidden=tt.count===0;
+  if(tt.count){$('#tr-cmd').innerHTML='<div class="trcmd"><button onclick="navigator.clipboard.writeText(this.nextElementSibling.textContent)">copy</button><code>'+esc(tt.command)+'</code></div>';
+    $('#tr-list').innerHTML=tt.tests.slice(0,30).map(t=>'<div class="tritem">'+esc(t.node_id)+'</div>').join('')+(tt.count>30?'<div class="tritem">…+'+(tt.count-30)+' more</div>':'');}
+  const deps=d.dependencies||[]; $('#dep-c').textContent=deps.length; $('#dep-sec').hidden=deps.length===0;
+  $('#dep-list').innerHTML=deps.slice(0,30).map(m=>'<div class="depitem"><b>'+esc(m.fqn)+'</b><br>'+esc(m.file_path)+'</div>').join('')+(deps.length>30?'<div class="depitem">…+'+(deps.length-30)+' more</div>':'');
   const W=svg.node().clientWidth,H=svg.node().clientHeight,cx=W/2,cy=H/2;
   const maxD=Math.max(1,d3.max(d.nodes,n=>n.depth)||1), ringGap=Math.min(W,H)/2.4/maxD;
   const g=svg.append('g');
