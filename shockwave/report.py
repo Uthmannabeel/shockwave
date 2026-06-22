@@ -39,14 +39,19 @@ def to_markdown(radius: BlastRadius) -> str:
     files = sorted(radius.affected_files)
     lines: list[str] = []
     lines.append(f"# ⚡ Blast radius: `{_seed_label(radius)}`")
+    if radius.commit:
+        lines.append(f"<sub>graph @ `{radius.commit[:8]}`</sub>")
     lines.append("")
     if not radius.seed_ids:
         lines.append(f"> No definition matched `{radius.seed}` in the indexed graph.")
         return "\n".join(lines)
-    lines.append(
-        f"**{len(radius.affected)}** definitions across **{len(files)}** files "
-        f"depend on this change."
-    )
+    if len(radius.affected) == 0:
+        lines.append(f"Nothing in the graph depends on `{_seed_label(radius)}` — empty blast radius. ✅")
+    else:
+        lines.append(
+            f"**{len(radius.affected)}** definitions across **{len(files)}** files "
+            f"depend on this change."
+        )
     if hotspots:
         lines.append(
             f" 🔥 **{len(hotspots)}** high-impact hotspot(s) with **no direct test** need review."
@@ -58,6 +63,15 @@ def to_markdown(radius: BlastRadius) -> str:
             f"**externally observable**."
         )
     lines.append("")
+    if len(radius.seeds_meta) > 1:
+        names = ", ".join(f"`{m.fqn or m.name}`" for m in radius.seeds_meta[:6])
+        more = "" if len(radius.seeds_meta) <= 6 else f" (+{len(radius.seeds_meta)-6} more)"
+        lines.append(f"> Resolved to {len(radius.seeds_meta)} definitions: {names}{more}")
+        lines.append("")
+    for w in radius.warnings:
+        lines.append(f"> ⚠ {w}")
+    if radius.warnings:
+        lines.append("")
 
     if entries:
         lines.append("## 🚪 Exposure — reachable from public surface")
@@ -150,6 +164,8 @@ def to_dict(radius: BlastRadius) -> dict:
     ranked = risk_mod.score(radius)
     return {
         "seed": radius.seed,
+        "commit": radius.commit,
+        "warnings": list(radius.warnings),
         "resolved": [
             {"id": m.id, "fqn": m.fqn or m.name, "file_path": m.file_path}
             for m in radius.seeds_meta
@@ -244,6 +260,8 @@ def to_graph(radius: BlastRadius) -> dict:
     d = to_dict(radius)
     return {
         "seed": _seed_label(radius),
+        "commit": radius.commit,
+        "warnings": list(radius.warnings),
         "summary": d["summary"],
         "nodes": nodes,
         "links": links,

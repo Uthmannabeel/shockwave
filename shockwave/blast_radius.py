@@ -34,6 +34,7 @@ class DefMeta:
     fqn: str
     file_path: str
     definition_type: str
+    commit_sha: str = ""  # which indexed revision this came from (transparency)
 
 
 @dataclass
@@ -64,6 +65,12 @@ class BlastRadius:
     # the seed (i.e. caller depends on parents[caller]). Lets us reconstruct a
     # call path from any affected node back to a seed.
     parents: dict[int, int] = field(default_factory=dict)
+    # caveats worth showing the user (partial results, permission scoping, …)
+    warnings: list[str] = field(default_factory=list)
+
+    @property
+    def commit(self) -> str:
+        return self.seeds_meta[0].commit_sha if self.seeds_meta else ""
 
     @property
     def affected_files(self) -> set[str]:
@@ -88,7 +95,8 @@ def _definitions_query() -> str:
     s = schema
     return (
         f"SELECT {s.DEF_ID} AS id, {s.DEF_NAME} AS name, {s.DEF_FQN} AS fqn, "
-        f"{s.DEF_FILE_PATH} AS file_path, {s.DEF_TYPE} AS definition_type "
+        f"{s.DEF_FILE_PATH} AS file_path, {s.DEF_TYPE} AS definition_type, "
+        f"{s.DEF_COMMIT} AS commit_sha "
         f"FROM {s.DEFINITION}"
     )
 
@@ -139,6 +147,7 @@ def fetch_definitions(backend: OrbitBackend) -> dict[int, DefMeta]:
             fqn=r.get("fqn") or "",
             file_path=r.get("file_path") or "",
             definition_type=r.get("definition_type") or "",
+            commit_sha=r.get("commit_sha") or "",
         )
     return out
 
@@ -179,12 +188,16 @@ def resolve_seed(seed: str, defs: dict[int, DefMeta]) -> list[DefMeta]:
         ]
         if hits:
             return hits
-    # symbol: exact name or fqn, then fqn suffix
-    exact = [d for d in defs.values() if seed in (d.name, d.fqn)]
-    if exact:
-        return exact
-    suffix = [d for d in defs.values() if d.fqn.endswith("." + seed)]
-    return suffix
+    # Prefer the most specific match so a fully-qualified seed never conflates
+    # same-named symbols: exact fqn  >  fqn suffix  >  bare name.
+    fqn_exact = [d for d in defs.values() if d.fqn == seed]
+    if fqn_exact:
+        return fqn_exact
+    if "." in seed:
+        fqn_suffix = [d for d in defs.values() if d.fqn.endswith("." + seed)]
+        if fqn_suffix:
+            return fqn_suffix
+    return [d for d in defs.values() if d.name == seed]
 
 
 # --- the walk ------------------------------------------------------------------
@@ -225,6 +238,14 @@ def _walk(
         if i in defs
     ]
     affected.sort(key=lambda a: (a.depth, a.file_path, a.fqn))
+    warnings: list[str] = []
+    looks_like_path = ("/" in seed) or ("\\" in seed) or os.path.splitext(seed)[1] != ""
+    if not looks_like_path and len(seeds_meta) > 1:
+        files = sorted({m.file_path for m in seeds_meta})
+        warnings.append(
+            f"'{seed}' matched {len(seeds_meta)} definitions across {len(files)} "
+            f"files; the radius is their union. Pass a fully-qualified name to disambiguate."
+        )
     return BlastRadius(
         seed=seed,
         seed_ids=seed_ids,
@@ -233,6 +254,7 @@ def _walk(
         defs_by_id=defs,
         inbound=inbound,
         parents=parents,
+        warnings=warnings,
     )
 
 
@@ -244,6 +266,9 @@ def compute(backend: OrbitBackend, seed: str, max_hops: int = 5) -> BlastRadius:
     return _walk(seed, seeds_meta, defs, inbound, max_hops)
 
 
+REMOTE_HOP_LIMIT = 2000  # heuristic: a hop this big may be capped by Orbit
+
+
 def _meta_from_remote(node: dict) -> DefMeta:
     return DefMeta(
         id=int(node["id"]),
@@ -251,6 +276,7 @@ def _meta_from_remote(node: dict) -> DefMeta:
         fqn=node.get("fqn") or "",
         file_path=node.get("file_path") or "",
         definition_type=node.get("definition_type") or "",
+        commit_sha=node.get("commit_sha") or "",
     )
 
 
@@ -277,10 +303,16 @@ def compute_remote(backend, seed: str, max_hops: int = 5) -> BlastRadius:
 
     defs: dict[int, DefMeta] = {}
     inbound: dict[int, set[int]] = {}
+    warnings: list[str] = [
+        "Remote results reflect only code your token can see — Orbit is permission-aware."
+    ]
+    flags = {"truncated": False}
 
     def ingest(nodes: dict[int, dict], edges: list[tuple[int, int]]):
         for nid, nd in nodes.items():
             defs.setdefault(nid, _meta_from_remote(nd))
+        if len(edges) >= REMOTE_HOP_LIMIT:
+            flags["truncated"] = True
         for caller, callee in edges:
             inbound.setdefault(callee, set()).add(caller)
 
@@ -325,6 +357,16 @@ def compute_remote(backend, seed: str, max_hops: int = 5) -> BlastRadius:
         nodes, edges = backend.callers_by_ids(list(depth.keys()))
         ingest(nodes, edges)
 
+    if flags["truncated"]:
+        warnings.append(
+            "A hop returned a very large number of callers — results may be "
+            "truncated by Orbit's row limits; treat counts as a lower bound."
+        )
+    if not looks_like_path and len(seed_ids) > 1:
+        warnings.append(
+            f"'{seed}' matched {len(seed_ids)} definitions; the radius is their "
+            f"union. Pass a fully-qualified name to disambiguate."
+        )
     affected = [AffectedNode(meta=defs[i], depth=dep) for i, dep in depth.items() if i in defs]
     affected.sort(key=lambda a: (a.depth, a.file_path, a.fqn))
     return BlastRadius(
@@ -335,6 +377,7 @@ def compute_remote(backend, seed: str, max_hops: int = 5) -> BlastRadius:
         defs_by_id=defs,
         inbound=inbound,
         parents=parents,
+        warnings=warnings,
     )
 
 

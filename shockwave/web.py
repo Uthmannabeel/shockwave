@@ -41,21 +41,24 @@ def create_app():
     for path, (template, key) in PAGES.items():
         app.add_url_rule(path, key, make_view(template, key))
 
-    @app.get("/api/analyze")
+    @app.post("/api/analyze")
     def analyze():
+        # POST + token in the body (or X-Orbit-Token header) so secrets never
+        # land in URLs, server logs, or browser history.
         enable_os_trust()
-        seed = (request.args.get("seed") or "").strip()
+        data = request.get_json(silent=True) or {}
+        seed = (data.get("seed") or "").strip()
         if not seed:
             return jsonify({"error": "Enter a function, class, or file to analyze."}), 400
         try:
-            hops = max(1, min(8, int(request.args.get("hops", "4"))))
-        except ValueError:
+            hops = max(1, min(8, int(data.get("hops", 4))))
+        except (ValueError, TypeError):
             hops = 4
-        kind = request.args.get("backend", "local")
+        kind = data.get("backend", "local")
         try:
             if kind == "remote":
-                url = request.args.get("url") or "https://gitlab.com"
-                token = request.args.get("token") or os.environ.get("GITLAB_TOKEN", "")
+                url = data.get("url") or "https://gitlab.com"
+                token = data.get("token") or request.headers.get("X-Orbit-Token") or os.environ.get("GITLAB_TOKEN", "")
                 if not token:
                     return jsonify({"error": "Remote analysis needs a GitLab token."}), 400
                 radius = blast_radius.compute_remote(RemoteBackend(url, token), seed, max_hops=hops)

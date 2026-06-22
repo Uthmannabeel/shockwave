@@ -73,6 +73,25 @@ shockwave-web        <span class="cm"># → http://127.0.0.1:7777</span></pre>
   </div>
 </section>
 
+<section style="background:var(--bg-soft)">
+  <div class="wrap">
+    <p class="eyebrow rv">Honesty</p>
+    <h2 class="rv">What Shockwave is — and isn't.</h2>
+    <p class="lead rv">A tool you can trust is one that's clear about its edges. Shockwave is exact about what the graph says and explicit about what it can't see.</p>
+    <div class="grid-2 mt-lg" style="gap:22px">
+      <div class="card rv"><h3 style="font-size:17px">Inherent to static analysis</h3>
+        <p style="margin-bottom:10px">It follows Orbit's resolved <code>CALLS</code>/<code>EXTENDS</code> edges, so it can't see <b style="color:var(--text)">dynamic dispatch, reflection, callbacks, or config-wired</b> calls. Value/constant changes (no call edge) and config/non-code changes fall outside the code graph.</p>
+        <p>Coverage is <b style="color:var(--text)">"no <em>direct</em> test"</b>, not real coverage; exposure and risk are <b style="color:var(--text)">signals, not guarantees</b>.</p>
+      </div>
+      <div class="card rv"><h3 style="font-size:17px">Bounded by Orbit</h3>
+        <p style="margin-bottom:10px">Results reflect Orbit's index: the <b style="color:var(--text)">default branch</b>, supported languages, and — on Remote — only code <b style="color:var(--text)">your token can see</b> (permission-aware, so a radius can be partial). There's no cross-repo call graph yet.</p>
+        <p>The depth is capped per run, and very large fan-outs may be truncated — Shockwave <b style="color:var(--text)">tells you</b> when a result is partial or a name was ambiguous, rather than hiding it.</p>
+      </div>
+    </div>
+    <p class="lead rv mt-md" style="font-size:14.5px">Security reachability (ranking vulnerabilities by whether they're reachable) is the headline item on the roadmap — Orbit's <code>Finding</code> nodes don't yet carry a code location, so it needs a join with GitLab's Vulnerability API.</p>
+  </div>
+</section>
+
 <section class="band">
   <div class="wrap">
     <h2 class="rv">Ready?</h2>

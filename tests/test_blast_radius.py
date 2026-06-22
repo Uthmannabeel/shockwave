@@ -108,6 +108,50 @@ def test_clean_path_strips_only_dot_slash_prefix():
     assert blast_radius._clean_path(".config/app.py") == ".config/app.py"
 
 
+def test_is_test_path_word_boundary():
+    assert risk.is_test_path("tests/test_x.py")
+    assert risk.is_test_path("pkg/test_utils.py")
+    assert risk.is_test_path("pkg/utils_test.go")
+    assert risk.is_test_path("a/conftest.py")
+    # the substring trap: these are NOT tests
+    assert not risk.is_test_path("app/latest.py")
+    assert not risk.is_test_path("app/contest.py")
+    assert not risk.is_test_path("app/attest.py")
+
+
+def test_entry_detection_is_not_substring():
+    from shockwave.blast_radius import DefMeta
+    def meta(name, path):
+        return DefMeta(id=1, name=name, fqn=name, file_path=path, definition_type="function")
+    # `review.py` must NOT count as a `view` entry surface
+    assert not reach._is_entry(meta("process", "app/review.py"), None)
+    # genuine surfaces
+    assert reach._is_entry(meta("x", "app/routes.py"), None)
+    assert reach._is_entry(meta("route", "core/scaffold.py"), None)
+    assert reach._is_entry(meta("handler", "svc/api/v1.py"), None)
+
+
+def test_fqn_seed_does_not_conflate_same_names():
+    defs = [
+        {"id": 1, "name": "run", "fqn": "a.run", "file_path": "a.py", "definition_type": "function"},
+        {"id": 2, "name": "run", "fqn": "b.run", "file_path": "b.py", "definition_type": "function"},
+        {"id": 3, "name": "caller", "fqn": "c.caller", "file_path": "c.py", "definition_type": "function"},
+    ]
+    impacts = [(1, 3)]  # caller depends on a.run only
+
+    class FB:
+        def sql(self, q):
+            return ([{"callee": c, "caller": k} for c, k in impacts] if "UNION ALL" in q else defs)
+
+    # fully-qualified seed resolves to exactly one definition (no conflation)
+    r = blast_radius.compute(FB(), "a.run", max_hops=3)
+    assert r.seed_ids == [1]
+    # bare ambiguous name resolves to both and warns
+    r2 = blast_radius.compute(FB(), "run", max_hops=3)
+    assert set(r2.seed_ids) == {1, 2}
+    assert any("matched" in w for w in r2.warnings)
+
+
 def test_mermaid_and_html_escape_special_chars():
     defs = [{"id": 1, "name": "op<T>", "fqn": 'ns::op"x"', "file_path": "a.cpp", "definition_type": "function"},
             {"id": 2, "name": "caller|bad", "fqn": "caller|bad", "file_path": "b.cpp", "definition_type": "function"}]

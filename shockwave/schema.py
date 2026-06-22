@@ -58,6 +58,7 @@ DEF_TYPE = "definition_type"
 DEF_FILE_PATH = "file_path"  # NB: definitions link to files by path string, not id
 DEF_START_LINE = "start_line"
 DEF_END_LINE = "end_line"
+DEF_COMMIT = "commit_sha"
 
 # heuristics for detecting test files in a blast radius
 TEST_PATH_MARKERS = ("test", "spec", "__tests__", ".test.", ".spec.", "_test")

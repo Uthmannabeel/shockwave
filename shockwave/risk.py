@@ -15,12 +15,25 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from .blast_radius import BlastRadius
-from .schema import TEST_PATH_MARKERS
+
+# A path is a test path when a *directory segment* is a test dir, or the
+# *filename* follows a test convention. Segment/filename matching (not naive
+# substring) avoids false positives like `latest.py` or `contest.py`.
+_TEST_DIR_SEGMENTS = {"test", "tests", "spec", "specs", "__tests__", "testing"}
 
 
 def is_test_path(file_path: str) -> bool:
     p = file_path.replace("\\", "/").lower()
-    return any(marker in p for marker in TEST_PATH_MARKERS)
+    parts = [seg for seg in p.split("/") if seg]
+    if any(seg in _TEST_DIR_SEGMENTS for seg in parts[:-1]):
+        return True
+    fn = parts[-1] if parts else p
+    return (
+        fn == "conftest.py"
+        or fn.startswith("test_") or fn.startswith("test.") or fn.startswith("spec_")
+        or fn.endswith("_test.py") or fn.endswith("_test.go") or fn.endswith("_spec.rb")
+        or ".test." in fn or ".spec." in fn or "_spec." in fn
+    )
 
 
 @dataclass

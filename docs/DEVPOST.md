@@ -56,6 +56,13 @@ the DSL rules, ready JSON recipes, and the hop-by-hop transitive-reachability
 algorithm. Any Duo agent or MCP client can now do correct graph reachability over
 Orbit — for code today, any entity/edge tomorrow — without re-learning the gotchas.
 
+## Limitations (we're explicit about them)
+A tool you can trust states its edges. Shockwave is exact about what the graph says and honest about what it can't see:
+- **Static analysis.** It follows resolved `CALLS`/`EXTENDS` edges, so dynamic dispatch, reflection, callbacks, and config-wired calls are invisible; value/constant and non-code (config) changes fall outside the code graph.
+- **Signals, not guarantees.** "No *direct* test" isn't real coverage; exposure and the risk score are heuristics (now with **word-boundary**, not substring, matching to avoid false positives).
+- **Bounded by Orbit.** Results reflect Orbit's index — default branch, supported languages, and on Remote only what your token can see (permission-aware → a radius can be partial). No cross-repo call graph yet; depth is capped; very large fan-outs may be truncated.
+- **We surface our own caveats.** The report flags partial/truncated results, ambiguous (multi-match) seeds, permission scoping, and shows the indexed commit — rather than hiding them. Tokens go in request bodies, never URLs.
+
 ## What's next
 - **Security reachability triage** — the natural next step: rank vulnerabilities by
   whether their code is *reachable from an entry point* and show the blast radius of

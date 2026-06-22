@@ -48,14 +48,16 @@ def _changed_files(api: str, token: str, project_id: str, mr_iid: str) -> list[s
     resp = requests.get(url, headers={"PRIVATE-TOKEN": token}, timeout=30)
     if resp.status_code != 200:
         raise OrbitError(f"could not list MR diffs (HTTP {resp.status_code}): {resp.text}")
-    files = []
+    code, other = [], 0
     for d in resp.json():
         if d.get("deleted_file"):
             continue
         path = d.get("new_path") or d.get("old_path") or ""
         if path.endswith(CODE_EXTENSIONS):
-            files.append(path)
-    return files
+            code.append(path)
+        elif path:
+            other += 1
+    return code, other
 
 
 def _upsert_note(api: str, token: str, project_id: str, mr_iid: str, body: str) -> None:
@@ -93,9 +95,18 @@ def main(argv: list[str] | None = None) -> int:
         mr_iid = _env("CI_MERGE_REQUEST_IID")
         max_hops = int(os.environ.get("SHOCKWAVE_MAX_HOPS", "5"))
 
-        files = _changed_files(api, token, project_id, mr_iid)
+        files, other = _changed_files(api, token, project_id, mr_iid)
         if not files:
-            print("Shockwave: no code files changed; skipping.")
+            if other:
+                note = (
+                    f"This MR changes **{other}** file(s) in languages Orbit doesn't "
+                    f"index (config, docs, etc.). Shockwave analyzes the code graph, "
+                    f"so **no impact was computed** — review non-code changes manually."
+                )
+                _upsert_note(api, token, project_id, mr_iid, HEADER + note + FOOTER)
+                print("Shockwave: only non-code files changed; posted a note.")
+            else:
+                print("Shockwave: no files changed; skipping.")
             return 0
 
         backend = RemoteBackend(server, token)
@@ -103,7 +114,7 @@ def main(argv: list[str] | None = None) -> int:
 
         if not radius.affected:
             summary = (
-                f"Changed {len(files)} file(s); the Orbit graph shows **nothing "
+                f"Changed {len(files)} code file(s); the Orbit graph shows **nothing "
                 f"else depends on them** — low blast radius. ✅"
             )
             body = HEADER + summary + FOOTER

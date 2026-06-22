@@ -30,6 +30,10 @@
   .legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-left:8px;vertical-align:middle}
   #epi{position:absolute;left:22px;bottom:16px;z-index:5;font-family:var(--mono);font-size:12px;color:#7C88A6;pointer-events:none}
   #epi b{color:#FFE6A0;font-weight:500}
+  .warnbar{position:absolute;left:50%;transform:translateX(-50%);bottom:16px;z-index:6;max-width:62%;
+    background:rgba(20,12,4,.78);border:1px solid #5a431f;color:#FFD18A;border-radius:8px;padding:8px 12px;
+    font-family:var(--mono);font-size:11px;line-height:1.5}
+  .warnbar div+div{margin-top:4px}
   .ring{fill:none;stroke:#16203a}
   .node{cursor:pointer}
   .node text{font-family:var(--mono);font-size:10px;fill:#9BA7C2;pointer-events:none}
@@ -95,6 +99,7 @@
       </div>
       <svg id="map" aria-label="Blast map"></svg>
       <div id="epi" hidden></div>
+      <div class="warnbar" id="warnbar" hidden></div>
       <div class="empty" id="empty">
         <div class="big">Pick an epicenter.</div>
         <div>Type a symbol and hit <kbd>Detonate</kbd> to see what a change ripples into.</div>
@@ -128,22 +133,25 @@ $('#seed').addEventListener('keydown',e=>{if(e.key==='Enter')run();});
 $('#go').onclick=run;
 async function run(){
   const seed=$('#seed').value.trim(); if(!seed)return;
-  const p=new URLSearchParams({seed,hops:$('#hops').value||'4',backend:mode});
-  if(mode==='remote'){p.set('url',$('#url').value);p.set('token',$('#token').value);}
+  const body={seed,hops:parseInt($('#hops').value||'4',10),backend:mode};
+  if(mode==='remote'){body.url=$('#url').value;body.token=$('#token').value;}
   const empty=$('#empty'); empty.hidden=false; empty.innerHTML='<div class="big"><span class="spin"></span></div><div>Mapping the blast radius…</div>';
   try{
-    const r=await fetch('/api/analyze?'+p.toString()); const data=await r.json();
+    const r=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const data=await r.json();
     if(!r.ok){empty.hidden=false;empty.innerHTML='<div class="big err">No blast.</div><div class="err">'+(data.error||'Something went wrong.')+'</div>';clearAll();return;}
     empty.hidden=true; render(data);
   }catch(e){empty.innerHTML='<div class="big err">Server unreachable.</div><div>Is <code>shockwave-web</code> running?</div>';}
 }
-function clearAll(){svg.selectAll('*').remove();['readout','legend','epi'].forEach(i=>$('#'+i).hidden=true);$('#exp-sec').hidden=true;$('#hs-sec').hidden=true;}
+function clearAll(){svg.selectAll('*').remove();['readout','legend','epi','warnbar'].forEach(i=>$('#'+i).hidden=true);$('#exp-sec').hidden=true;$('#hs-sec').hidden=true;}
 let sim;
 function render(d){
   clearAll();
   $('#s-aff').textContent=d.summary.affected_definitions; $('#s-files').textContent=d.summary.affected_files;
   $('#s-hot').textContent=d.summary.hotspots; $('#s-exp').textContent=d.summary.entry_points;
-  $('#readout').hidden=false; $('#legend').hidden=false; $('#epi').hidden=false; $('#epi').innerHTML='EPICENTER&nbsp; <b>'+d.seed+'</b>';
+  $('#readout').hidden=false; $('#legend').hidden=false; $('#epi').hidden=false;
+  $('#epi').innerHTML='EPICENTER&nbsp; <b>'+d.seed+'</b>'+(d.commit?' &nbsp;·&nbsp; graph @ '+d.commit.slice(0,8):'');
+  const wb=$('#warnbar'); if(d.warnings&&d.warnings.length){wb.hidden=false;wb.innerHTML=d.warnings.map(w=>'<div>⚠ '+esc(w)+'</div>').join('');}else{wb.hidden=true;}
   const W=svg.node().clientWidth,H=svg.node().clientHeight,cx=W/2,cy=H/2;
   const maxD=Math.max(1,d3.max(d.nodes,n=>n.depth)||1), ringGap=Math.min(W,H)/2.4/maxD;
   const g=svg.append('g');
@@ -158,13 +166,18 @@ function render(d){
   const rOf=n=>n.role==='epicenter'?13:4+Math.sqrt(n.fan_in||0)*2.2;
   const link=g.append('g').selectAll('line').data(links).join('line').attr('class','link');
   const node=g.append('g').selectAll('g').data(nodes).join('g').attr('class','node');
+  // shape cues so role is not encoded by colour alone (colour-blind safe):
+  // entry points get a detached halo ring, hotspots a dashed ring.
+  node.filter(n=>n.role==='entry').append('circle').attr('r',n=>rOf(n)+5)
+    .attr('fill','none').attr('stroke','#2FE6D6').attr('stroke-width',1.4).attr('opacity',.9);
   node.append('circle').attr('r',rOf)
     .attr('fill',n=>n.role==='test'?'#39B98A':dc(n.depth))
     .attr('opacity',n=>n.role==='test'?.5:1)
     .attr('stroke',n=>n.role==='entry'?'#2FE6D6':(n.role==='hotspot'?'#FFB454':'rgba(0,0,0,.35)'))
     .attr('stroke-width',n=>n.role==='entry'||n.role==='hotspot'?2.4:1)
+    .attr('stroke-dasharray',n=>n.role==='hotspot'?'3 2':null)
     .style('filter',n=>n.role==='entry'?'drop-shadow(0 0 7px #2FE6D6)':(n.role==='epicenter'?'drop-shadow(0 0 12px #FFE6A0)':'none'));
-  node.filter(n=>n.role==='epicenter'||n.role==='entry').append('text').attr('x',n=>rOf(n)+5).attr('y',4)
+  node.filter(n=>n.role==='epicenter'||n.role==='entry').append('text').attr('x',n=>rOf(n)+8).attr('y',4)
     .text(n=>n.label).attr('fill',n=>n.role==='entry'?'#2FE6D6':'#FFE6A0');
   node.on('mousemove',(e,n)=>{tip.style.opacity=1;tip.style.left=(e.clientX+14)+'px';tip.style.top=(e.clientY+14)+'px';
     tip.innerHTML='<div>'+n.fqn+'</div><div class="f">'+n.file+' · depth '+n.depth+' · fan-in '+n.fan_in+' · '+n.role+'</div>';litePath(n.id);})
