@@ -39,10 +39,12 @@ Scroll to **🚪 Exposure**.
 > externally observable, not internal. That's the same reachability question
 > security triage asks — applied to change risk."
 
-### 1:25–1:45 — It suggests the tests
-Scroll to **🧪 Suggested tests**.
-> "It doesn't just warn — for every untested hotspot it generates a pytest stub,
-> so you know exactly what to pin down before you ship."
+### 1:25–1:50 — Verdict + the tests to run
+Point to the **risk badge** (HIGH 100/100) and the **✅ Tests to run** panel.
+> "It doesn't stop at analysis — it gives a verdict: HIGH risk. And instead of
+> running the whole suite, it tells you the **58 tests that actually exercise
+> this change** — copy, paste, run. Plus a generated stub for the hotspots that
+> have no test at all."
 
 ### 1:35–2:05 — Same graph, in the cloud (Orbit Remote)
 Run:
