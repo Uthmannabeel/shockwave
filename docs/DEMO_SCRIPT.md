@@ -31,7 +31,15 @@ shockwave analyze setupmethod --max-hops 4
 Scroll the ranked report; open the HTML view (`--format html`) to show the
 Mermaid graph rippling outward.
 
-### 1:05–1:35 — It suggests the tests
+### 1:05–1:25 — Exposure (the novel beat)
+Scroll to **🚪 Exposure**.
+> "And it's not just *what* depends on it — Shockwave shows the change is
+> **reachable from 21 public entry points**, including Flask's `@route` decorator.
+> The exact call path: `Scaffold.route → setupmethod`. A break here is
+> externally observable, not internal. That's the same reachability question
+> security triage asks — applied to change risk."
+
+### 1:25–1:45 — It suggests the tests
 Scroll to **🧪 Suggested tests**.
 > "It doesn't just warn — for every untested hotspot it generates a pytest stub,
 > so you know exactly what to pin down before you ship."
