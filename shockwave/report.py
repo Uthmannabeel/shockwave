@@ -194,6 +194,65 @@ def to_json(radius: BlastRadius) -> str:
     return json.dumps(to_dict(radius), indent=2)
 
 
+def to_graph(radius: BlastRadius) -> dict:
+    """Nodes + links for the web blast-map (ids as strings for JS safety)."""
+    seed_ids = set(radius.seed_ids)
+    entry_ids = {e.meta.id for e in reach_mod.entry_points(radius)}
+    hot_ids = {r.id for r in risk_mod.score(radius) if r.is_hotspot}
+    fan_in = {r.id: r.fan_in for r in risk_mod.score(radius)}
+
+    depth_of = {i: 0 for i in seed_ids}
+    for a in radius.affected:
+        depth_of[a.meta.id] = a.depth
+
+    def role(i: int, meta) -> str:
+        if i in seed_ids:
+            return "epicenter"
+        if i in entry_ids:
+            return "entry"
+        if i in hot_ids:
+            return "hotspot"
+        if risk_mod.is_test_path(meta.file_path):
+            return "test"
+        return "normal"
+
+    ids = list(seed_ids) + [a.meta.id for a in radius.affected]
+    nodes = []
+    for i in ids:
+        m = radius.defs_by_id.get(i)
+        if not m:
+            continue
+        nodes.append({
+            "id": str(i),
+            "label": m.name or (m.fqn.split(".")[-1] if m.fqn else str(i)),
+            "fqn": m.fqn or m.name,
+            "file": m.file_path,
+            "depth": depth_of.get(i, 0),
+            "role": role(i, m),
+            "fan_in": fan_in.get(i, 0),
+        })
+
+    relevant = set(ids)
+    links = []
+    for callee, callers in radius.inbound.items():
+        if callee not in relevant:
+            continue
+        for caller in callers:
+            if caller in relevant:
+                links.append({"source": str(caller), "target": str(callee)})
+
+    d = to_dict(radius)
+    return {
+        "seed": _seed_label(radius),
+        "summary": d["summary"],
+        "nodes": nodes,
+        "links": links,
+        "exposure": d["exposure"],
+        "affected": d["affected"],
+        "suggested_tests": d["suggested_tests"],
+    }
+
+
 def to_html(radius: BlastRadius) -> str:
     """Self-contained HTML: summary + the Mermaid graph rendered via CDN."""
     mermaid_body = to_mermaid(radius).removeprefix("```mermaid\n").removesuffix("\n```")

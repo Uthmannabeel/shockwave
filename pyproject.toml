@@ -18,10 +18,12 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0"]
+web = ["flask>=3.0"]
 
 [project.scripts]
 shockwave = "shockwave.cli:main"
 shockwave-bot = "shockwave.ci_bot:main"
+shockwave-web = "shockwave.web:main"
 
 [tool.setuptools.packages.find]
 include = ["shockwave*"]

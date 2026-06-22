@@ -25,6 +25,7 @@ def is_test_path(file_path: str) -> bool:
 
 @dataclass
 class RiskedNode:
+    id: int
     fqn: str
     name: str
     file_path: str
@@ -66,6 +67,7 @@ def score(radius: BlastRadius) -> list[RiskedNode]:
         value = base * (1.0 if covered else 2.0)  # untested code is twice as risky
         ranked.append(
             RiskedNode(
+                id=nid,
                 fqn=node.fqn,
                 name=node.meta.name,
                 file_path=node.file_path,

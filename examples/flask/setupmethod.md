@@ -2,7 +2,7 @@
 
 **114** definitions across **10** files depend on this change.
  🔥 **7** high-impact hotspot(s) with **no direct test** need review.
- 🚪 Reachable from **21** public entry point(s) — a break here is **externally observable**.
+ 🚪 Reachable from **2** public entry point(s) — a break here is **externally observable**.
 
 ## 🚪 Exposure — reachable from public surface
 
@@ -10,18 +10,8 @@ _Call paths from an external entry point down to the change._
 
 | Entry point | Kind | Path to change |
 | --- | --- | --- |
+| `src.flask.sansio.scaffold.Scaffold.endpoint` | route | src.flask.sansio.scaffold.Scaffold.endpoint → src.flask.sansio.scaffold.setupmethod |
 | `src.flask.sansio.scaffold.Scaffold.route` | route | src.flask.sansio.scaffold.Scaffold.route → src.flask.sansio.scaffold.setupmethod |
-| `src.flask.sansio.app.App.shell_context_processor` | surface | src.flask.sansio.app.App.shell_context_processor → src.flask.sansio.scaffold.setupmethod |
-| `src.flask.sansio.app.App.teardown_appcontext` | surface | src.flask.sansio.app.App.teardown_appcontext → src.flask.sansio.scaffold.setupmethod |
-| `src.flask.sansio.app.App.template_filter` | surface | src.flask.sansio.app.App.template_filter → src.flask.sansio.scaffold.setupmethod |
-| `src.flask.sansio.app.App.template_global` | surface | src.flask.sansio.app.App.template_global → src.flask.sansio.scaffold.setupmethod |
-| `src.flask.sansio.app.App.template_test` | surface | src.flask.sansio.app.App.template_test → src.flask.sansio.scaffold.setupmethod |
-| `src.flask.sansio.scaffold.Scaffold.delete` | surface | src.flask.sansio.scaffold.Scaffold.delete → src.flask.sansio.scaffold.setupmethod |
-| `src.flask.sansio.scaffold.Scaffold.endpoint` | surface | src.flask.sansio.scaffold.Scaffold.endpoint → src.flask.sansio.scaffold.setupmethod |
-| `src.flask.sansio.scaffold.Scaffold.patch` | surface | src.flask.sansio.scaffold.Scaffold.patch → src.flask.sansio.scaffold.setupmethod |
-| `src.flask.sansio.scaffold.Scaffold.post` | surface | src.flask.sansio.scaffold.Scaffold.post → src.flask.sansio.scaffold.setupmethod |
-| `src.flask.sansio.scaffold.Scaffold.put` | surface | src.flask.sansio.scaffold.Scaffold.put → src.flask.sansio.scaffold.setupmethod |
-| `src.flask.app.Flask.__init__` | surface | src.flask.app.Flask.__init__ → src.flask.sansio.app.App.add_url_rule → src.flask.sansio.scaffold.setupmethod |
 
 ## 🔥 Hotspots with no direct test (review first)
 

@@ -41,7 +41,7 @@ class EntryPoint:
 def _kind(meta: DefMeta) -> str:
     p = meta.file_path.lower()
     n = meta.name.lower()
-    if any(m in p for m in ("route", "url", "view", "endpoint")) or "route" in n:
+    if any(m in p for m in ("route", "url", "view", "endpoint")) or n in ("route", "endpoint"):
         return "route"
     if "api" in p or "handler" in p or "controller" in p:
         return "api"
@@ -51,14 +51,18 @@ def _kind(meta: DefMeta) -> str:
 
 
 def _is_entry(meta: DefMeta, radius: BlastRadius) -> bool:
+    """A genuine *external* entry point: a route/API/CLI/main surface.
+
+    We deliberately do NOT treat every structural root (a node nothing calls) as
+    an entry point — an uncalled internal helper isn't externally reachable. We
+    require a semantic signal (path or name), so "externally observable" stays
+    honest.
+    """
     if is_test_path(meta.file_path):
         return False
-    # structural: nothing in the explored graph calls it -> it's an outer surface
-    structural = not radius.inbound.get(meta.id)
     p = meta.file_path.lower()
     n = meta.name.lower()
-    semantic = any(m in p for m in ENTRY_FILE_MARKERS) or n in ENTRY_NAME_MARKERS
-    return structural or semantic
+    return any(m in p for m in ENTRY_FILE_MARKERS) or n in ENTRY_NAME_MARKERS
 
 
 def entry_points(radius: BlastRadius) -> list[EntryPoint]:

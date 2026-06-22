@@ -34,7 +34,7 @@ Mermaid graph rippling outward.
 ### 1:05–1:25 — Exposure (the novel beat)
 Scroll to **🚪 Exposure**.
 > "And it's not just *what* depends on it — Shockwave shows the change is
-> **reachable from 21 public entry points**, including Flask's `@route` decorator.
+> **reachable from a public entry point**: Flask's `@route` decorator.
 > The exact call path: `Scaffold.route → setupmethod`. A break here is
 > externally observable, not internal. That's the same reachability question
 > security triage asks — applied to change risk."

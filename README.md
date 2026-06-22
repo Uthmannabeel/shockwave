@@ -48,7 +48,7 @@ $ shockwave analyze setupmethod --max-hops 4
 
 **114** definitions across **10** files depend on this change.
  🔥 **7** high-impact hotspot(s) with **no direct test** need review.
- 🚪 Reachable from **21** public entry point(s) — incl. `Scaffold.route` (`Scaffold.route → setupmethod`).
+ 🚪 Reachable from **2** public entry point(s) — incl. `Scaffold.route` (`Scaffold.route → setupmethod`).
 
 ## 🔥 Hotspots with no direct test (review first)
 | Definition                                   | File                           | Depth | Fan-in | Risk |
