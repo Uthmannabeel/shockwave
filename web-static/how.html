@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>How Shockwave works — the Orbit graph, traversed</title>
+<meta name="description" content="Shockwave reads GitLab Orbit's knowledge graph to map the blast radius of any code change: every dependent, the public entry points it reaches, and the high-risk code no test covers." />
+<script>(function(){try{var t=localStorage.getItem('shockwave-theme')||(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark');document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/site.css">
+
+</head>
+<body class="">
+<nav class="nav">
+  <div class="wrap nav-in">
+    <a href="/" class="logo">SHOCK<b>WAVE</b></a>
+    <div class="nav-links">
+      <a href="/how" class="on">How it works</a>
+      <a href="/features" class="">What it surfaces</a>
+      <a href="/surfaces" class="">Where it runs</a>
+      <a href="/docs" class="">Docs</a>
+    </div>
+    <div class="nav-cta">
+      <button class="icon-btn" id="themeBtn" aria-label="Toggle light / dark">
+        <svg class="sun" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4 12H2M22 12h-2M5 5l1.5 1.5M17.5 17.5 19 19M19 5l-1.5 1.5M6.5 17.5 5 19"/></svg>
+        <svg class="moon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
+      </button>
+      <a class="btn btn-ghost btn-sm" href="https://gitlab.com/uthmannabeel-group/Shockwave-project" target="_blank" rel="noopener">GitLab</a>
+      <a class="btn btn-primary btn-sm" href="/app">Launch Blast Monitor</a>
+    </div>
+  </div>
+</nav>
+
+<main>
+<section class="page-head">
+  <div class="wrap">
+    <p class="eyebrow rv">How it works</p>
+    <h1 class="rv" style="font-size:clamp(32px,4vw,48px)">From a change to its consequences.</h1>
+    <p class="lead rv">Shockwave never guesses. It resolves your change to nodes in GitLab Orbit's knowledge graph, walks the real call and inheritance edges, and reports only what the graph returns.</p>
+  </div>
+</section>
+
+<section style="padding-top:8px">
+  <div class="wrap">
+    <div class="grid-3">
+      <div class="step rv"><div class="n">01 · SEED</div><h3>Pick the epicenter</h3><p>A function, class, file, or a whole merge-request diff. Shockwave resolves it to one or more <code>Definition</code> nodes in the graph.</p></div>
+      <div class="step rv"><div class="n">02 · TRAVERSE</div><h3>Walk the graph</h3><p>A cycle-safe breadth-first walk over inbound <code>CALLS</code> and <code>EXTENDS</code> edges finds everything that transitively depends on the seed, with each node's hop distance.</p></div>
+      <div class="step rv"><div class="n">03 · REPORT</div><h3>Rank, expose, suggest</h3><p>Risk-rank by fan-in × proximity, flag the public entry points the change reaches, and generate a test stub for every untested hotspot.</p></div>
+    </div>
+  </div>
+</section>
+
+<section style="background:var(--bg-soft)">
+  <div class="wrap">
+    <div class="grid-2" style="align-items:center;gap:48px">
+      <div class="rv">
+        <p class="eyebrow">The substrate</p>
+        <h2>A graph, not a grep.</h2>
+        <p class="lead" style="margin-bottom:14px">GitLab Orbit indexes your repository into a knowledge graph: definitions, files, imports, and the resolved relationships between them. That resolution is the whole point — a call to <code class="mono cyan">process_payment</code> in another module is a real edge, not a string match.</p>
+        <p class="lead">Shockwave reads that graph two ways: <b style="color:var(--text)">Orbit Local</b> (a DuckDB graph on your machine) and <b style="color:var(--text)">Orbit Remote</b> (the hosted graph, over the REST query API). Same analysis, same answers.</p>
+      </div>
+      <div class="code rv">
+        <div class="code-bar"><span class="d"></span><span class="d"></span><span class="d"></span><span style="margin-left:6px">inbound traversal · anchored</span></div>
+<pre><span class="cm"># callee anchored by filter or node_ids — Orbit rejects full scans</span>
+{
+  <span class="k">"query_type"</span>: <span class="s">"traversal"</span>,
+  <span class="k">"nodes"</span>: [
+    { <span class="k">"id"</span>:<span class="s">"callee"</span>, <span class="k">"entity"</span>:<span class="s">"Definition"</span>,
+      <span class="k">"filters"</span>:{<span class="k">"name"</span>:<span class="s">"setupmethod"</span>} },
+    { <span class="k">"id"</span>:<span class="s">"caller"</span>, <span class="k">"entity"</span>:<span class="s">"Definition"</span> }
+  ],
+  <span class="k">"relationships"</span>: [
+    { <span class="k">"type"</span>:<span class="s">"CALLS"</span>, <span class="k">"from"</span>:<span class="s">"caller"</span>, <span class="k">"to"</span>:<span class="s">"callee"</span> }
+  ]
+}</pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <p class="eyebrow rv">The algorithm</p>
+    <h2 class="rv">Bounded, cycle-safe, exact.</h2>
+    <p class="lead rv">Orbit Remote forbids unbounded queries, so the transitive radius is computed hop by hop: resolve the seed, then expand each frontier by node ids until it runs dry or hits the hop budget — deduping by id, tracking minimum distance, and reconstructing the call path back to the change.</p>
+    <div class="grid-3 mt-lg">
+      <div class="card rv"><div class="ic">🎯</div><h3>Anchored</h3><p>Every query is anchored by a filter or node ids. No full-table scans, ever.</p></div>
+      <div class="card rv"><div class="ic">🔁</div><h3>Cycle-safe</h3><p>Visited-set BFS with a hop bound — recursion and mutual calls terminate cleanly.</p></div>
+      <div class="card rv"><div class="ic">🧭</div><h3>Path-aware</h3><p>Parent pointers reconstruct the exact chain from a public entry point to the change.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap">
+    <h2 class="rv">See it traverse a real graph.</h2>
+    <p class="lead rv">Index a repo, then watch the blast radius ripple out from any symbol.</p>
+    <div class="hero-cta rv"><a class="btn btn-primary" href="/app">Launch the Blast Monitor →</a><a class="btn btn-ghost" href="/docs">Get started</a></div>
+  </div>
+</section>
+</main>
+
+
+<footer class="foot">
+  <div class="wrap foot-in">
+    <a href="/" class="logo" style="font-size:15px">SHOCK<b>WAVE</b></a>
+    <a href="/how">How it works</a>
+    <a href="/features">Features</a>
+    <a href="/surfaces">Surfaces</a>
+    <a href="/docs">Docs</a>
+    <a href="https://gitlab.com/uthmannabeel-group/Shockwave-project" target="_blank" rel="noopener">GitLab</a>
+    <a href="https://about.gitlab.com/gitlab-orbit/" target="_blank" rel="noopener">GitLab Orbit</a>
+    <span class="foot-sp">Built for GitLab Transcend · MIT</span>
+  </div>
+</footer>
+
+
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<script src="/static/site.js"></script>
+
+</body>
+</html>

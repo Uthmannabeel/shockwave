@@ -1,8 +1,16 @@
-{% extends "base.html" %}
-{% block title %}Blast Monitor — Shockwave{% endblock %}
-{% block bodyclass %}app{% endblock %}
-{% block footer %}{% endblock %}
-{% block head %}
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Blast Monitor — Shockwave</title>
+<meta name="description" content="Shockwave reads GitLab Orbit's knowledge graph to map the blast radius of any code change: every dependent, the public entry points it reaches, and the high-risk code no test covers." />
+<script>(function(){try{var t=localStorage.getItem('shockwave-theme')||(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark');document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/site.css">
+
 <style>
   body.app{overflow:hidden}
   .app-shell{height:calc(100vh - 64px);display:grid;grid-template-rows:auto 1fr;min-height:0}
@@ -80,8 +88,30 @@
   @keyframes sp{to{transform:rotate(360deg)}}
   @media(max-width:820px){.app-main{grid-template-columns:1fr}.rail{display:none}}
 </style>
-{% endblock %}
-{% block content %}
+
+</head>
+<body class="app">
+<nav class="nav">
+  <div class="wrap nav-in">
+    <a href="/" class="logo">SHOCK<b>WAVE</b></a>
+    <div class="nav-links">
+      <a href="/how" class="">How it works</a>
+      <a href="/features" class="">What it surfaces</a>
+      <a href="/surfaces" class="">Where it runs</a>
+      <a href="/docs" class="">Docs</a>
+    </div>
+    <div class="nav-cta">
+      <button class="icon-btn" id="themeBtn" aria-label="Toggle light / dark">
+        <svg class="sun" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4 12H2M22 12h-2M5 5l1.5 1.5M17.5 17.5 19 19M19 5l-1.5 1.5M6.5 17.5 5 19"/></svg>
+        <svg class="moon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
+      </button>
+      <a class="btn btn-ghost btn-sm" href="https://gitlab.com/uthmannabeel-group/Shockwave-project" target="_blank" rel="noopener">GitLab</a>
+      <a class="btn btn-primary btn-sm" href="/app">Launch Blast Monitor</a>
+    </div>
+  </div>
+</nav>
+
+<main>
 <div class="app-shell">
   <div class="controls">
     <label class="field">
@@ -143,8 +173,13 @@
   </div>
 </div>
 <div class="tip" id="tip"></div>
-{% endblock %}
-{% block scripts %}
+</main>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<script src="/static/site.js"></script>
+
 <script src="/static/baked.js"></script>
 <script>
 const $ = s => document.querySelector(s);
@@ -249,4 +284,6 @@ function render(d){
 }
 function esc(s){return s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
 </script>
-{% endblock %}
+
+</body>
+</html>

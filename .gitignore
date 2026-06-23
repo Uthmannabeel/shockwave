@@ -26,6 +26,8 @@ reports/
 !examples/**/*.html
 # the web UI's pages/templates are source, not generated reports
 !shockwave/web/**/*.html
+# the static export deployed to Vercel
+!web-static/**/*.html
 
 # Editor / OS
 .vscode/
