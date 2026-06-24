@@ -1,17 +1,17 @@
 # Devpost submission — ready to paste
 
-Copy each field into the Devpost form. Track: **Showcase** (target category: **Potential Impact**).
+Track: **Showcase** · lead category: **Potential Impact**.
 
 ---
 
 ## Submission name
 ```
-Shockwave — blast-radius impact analysis on GitLab Orbit
+Shockwave — turn GitLab Orbit's graph into a merge decision
 ```
 
 ## Elevator pitch (tagline)
 ```
-Know what a code change breaks — before you merge. Shockwave reads GitLab Orbit's knowledge graph to map a change's blast radius, exposure, and risk, and tells you the exact tests to run.
+Code review's hardest question — "if I change this, what breaks?" — finally answered. Shockwave reads GitLab Orbit's knowledge graph and returns a risk verdict, the exact path to every public entry point, and the precise tests to run — automatically, on every merge request.
 ```
 
 ## Try it out (links)
@@ -24,7 +24,7 @@ Live MR-bot review:        https://gitlab.com/uthmannabeel-group/Shockwave-proje
 
 ## Demo video
 ```
-<paste your YouTube/Vimeo link here>
+<paste your YouTube/Vimeo link>
 ```
 
 ## Built With
@@ -36,39 +36,44 @@ python, gitlab-orbit, gitlab-duo, gitlab-ai-catalog, gitlab-ci, flask, duckdb, d
 
 ## Project story (paste into "Tell us about your project")
 
-### Inspiration
-Every reviewer has approved a one-line change that quietly broke something three files away. The honest question in code review — *“if I change this, what actually breaks?”* — is one `grep` can't answer, because the answer lives in the **resolved call graph**, not in the text. GitLab Orbit just built that graph. We wanted to turn it into the answer — and then act on it.
+### The one question code review can't answer
+Ship a one-line change. Three files away, production breaks. Nobody caught it — because the reviewer was reading a **diff**, and the answer lived in the **call graph**. `grep` finds the word; it can't follow a cross-file, inherited, resolved reference. So teams approve on hope.
 
-### What it does
-Point Shockwave at a function, file, or merge-request diff and it traverses Orbit's knowledge graph to tell you:
+GitLab Orbit just turned the codebase into a queryable knowledge graph. **Shockwave is the layer that turns that graph into a decision.**
 
-- **Blast radius** — every definition that transitively depends on the change, across files, ranked by fan-in × proximity.
-- **Exposure** — whether the change is *reachable from a public entry point* (route / API / CLI), with the exact call path — so you know if a break is externally observable or internal-only.
-- **Untested hotspots** — high fan-in code no test calls directly, each with a generated **pytest stub**.
-- **Risk verdict** — one **LOW / REVIEW / HIGH** score the MR bot can gate on.
-- **Test impact selection** — the tests that *actually exercise* the change, as a copy-paste `pytest …` command (run those, not the whole suite).
-- **Outbound dependencies** — the flip side: what the change relies on.
+### What it does — review *with the answer*, not a guess
+Point it at a function, a file, or a whole merge-request diff. In seconds, Shockwave returns:
 
-It ships across **five surfaces**: a CLI, an interactive web **Blast Monitor**, an autonomous **merge-request bot**, a **GitLab Duo agent** in the AI Catalog, and a reusable **Orbit Reachability skill** for the ecosystem.
+- 🚦 **A risk verdict** — `LOW / REVIEW / HIGH`, that the merge-request bot can gate on.
+- ⚡ **The blast radius** — every definition that transitively depends on the change, across files, ranked by fan-in × proximity.
+- 🚪 **Exposure** — is the change reachable from a public route, API, or CLI? With the **exact call path**. A break the world can see, versus one it can't.
+- ✅ **The tests that matter** — not your whole suite, the *specific* tests that exercise this change, as a copy-paste `pytest` command.
+- 🧪 **The tests you're missing** — high-impact code no test touches, each with a generated stub.
+- 🔗 **What it depends on** — the reverse view, so review is complete in both directions.
+
+> **One Flask decorator. 114 definitions across 10 files. Reachable from `@route`. 58 tests that actually matter — none of which `grep` could have found.**
+
+### Not a dashboard you have to remember to open
+Five surfaces, one graph: a **CLI**, an autonomous **merge-request bot** that posts the review automatically, a **GitLab Duo agent** published in the AI Catalog, an interactive **Blast Monitor** (a live impact map), and a reusable **Orbit Reachability skill** so any agent can query Orbit correctly. It meets developers exactly where review already happens.
+
+### The feature big companies build whole products around
+*"Which tests should I run for this change?"* — Google's Test Impact Analysis and startups like Launchable are entire businesses answering it. Shockwave gets it **for free** from the graph and puts it on every merge request. That alone changes CI economics.
 
 ### How we built it
-A small, tested Python engine with **two Orbit backends**: **Orbit Local** (DuckDB graph via `orbit sql`) and **Orbit Remote** (the hosted graph over the JSON traversal DSL). Because Remote forbids full-graph scans, the transitive radius is an **iterative anchored BFS** — one query per hop. On top: a GitLab CI bot that posts the review on MRs, a Duo agent driving Orbit's `query_graph` tool, a D3 web app, and a static export deployed to Vercel (with real baked analyses so the demo works with no backend).
+A small, tested Python engine with **two Orbit backends**: **Orbit Local** (a DuckDB graph via `orbit sql`) and **Orbit Remote** (the hosted graph over its JSON traversal DSL). Remote forbids full-graph scans, so the transitive radius is an **iterative anchored BFS** — one query per hop, cycle-safe, path-reconstructing. On top: a GitLab CI bot that posts and updates the MR review, a Duo agent driving Orbit's `query_graph` tool, a D3 web app, and a static export on Vercel (with real baked analyses so the demo runs with zero backend).
 
-### Challenges we ran into
-- **Orbit Local ≠ Remote:** Local flattens code edges into `gl_edge` (no `gl_code_edge`) and has no `ImportedSymbol→Definition` edge, so cross-file calls are bridged by name (disambiguated by `import_path`); Remote resolves them to direct edges but rejects unbounded queries.
-- **Honesty under scrutiny:** “untested” overstated a heuristic that only checks *direct* test callers — we reworded it and switched to word-boundary matching to kill false positives.
-- **Security reachability** can't be Orbit-native yet: the `Finding` node carries no code location, so it needs a join with GitLab's Vulnerability API (roadmap).
-- Plus corporate-network TLS, protected-branch Git, and GitLab.com's runner-verification gate.
+### What makes it real — and honest
+Two **genuine** Orbit integrations, not a mock. The MR review on our own repo is **computed live from the graph**. 23 passing tests. And — rare for a hackathon — Shockwave is **explicit about what it can't see** and flags its own caveats (partial results, ambiguous names, the indexed commit), because a reviewer that overstates is worse than no reviewer at all.
 
-### Accomplishments that we're proud of
-Two **genuine** Orbit integrations (Local + Remote) with verifiable results — changing Flask's one-line `setupmethod` lights up **114 definitions across 10 files**. A **real, autonomous MR review** posted from the live graph. A published agent, a reusable skill, 23 passing tests, and a tool that's **honest about its own limits**.
-
-### What we learned
-A knowledge graph turns review from *“I think this is safe”* into *“here's exactly what depends on it.”* The hard part isn't the traversal — it's being precise about what the graph does and doesn't say.
+### Challenges we turned into wins
+- **Orbit Local ≠ Remote.** Local flattens code edges into `gl_edge` with no `ImportedSymbol→Definition` link, so cross-file calls are bridged by name and disambiguated by `import_path`; Remote resolves them but rejects unbounded queries — which is exactly why we built the anchored hop-by-hop walk.
+- **Accuracy honesty.** "Untested" overstated a heuristic that only checks *direct* test callers — we reworded it and replaced naïve substring matching with word-boundary matching to kill false positives (`latest.py` is no longer "a test").
+- **Security reachability** isn't Orbit-native yet: the `Finding` node carries no code location, so it needs a join with GitLab's Vulnerability API — that's our headline roadmap item, with the engine already built.
 
 ### What's next
-- **Security reachability triage** — rank vulnerabilities by whether they're reachable, via the Vulnerability-API join.
-- Line-level diff seeding, more edge types and languages, and an IDE gutter that shows blast radius as you type.
+- **Security reachability triage** — point the same engine at vulnerabilities: rank them by whether they're *actually reachable* from an entry point. Alert-fatigue, solved by the graph.
+- Line-level diff seeding, more edge types and languages, and an IDE gutter that shows a symbol's blast radius as you type.
 
-### Limitations (we're explicit)
-Static analysis (no dynamic dispatch/reflection/config), signals not guarantees, bounded by Orbit's index (default branch, supported languages, permission-aware on Remote), depth-capped. The tool flags its own caveats — partial results, ambiguous names, the indexed commit — rather than hiding them.
+---
+
+**The 30-second pitch:** *grep tells you where a name appears. Shockwave tells you what a change breaks, whether the world can see it, and exactly which tests to run — and posts it on every merge request, straight from GitLab Orbit.*
