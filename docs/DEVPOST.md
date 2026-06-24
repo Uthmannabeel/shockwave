@@ -5,7 +5,8 @@
 **Track:** Showcase · **Primary category:** Potential Impact
 
 **Links**
-- Code (MIT): https://github.com/Uthmannabeel/shockwave
+- Live site & Blast Monitor: https://shockwave-ochw.vercel.app/
+- Code (MIT, public): https://gitlab.com/uthmannabeel-group/Shockwave-project
 - AI Catalog agent: https://gitlab.com/explore/ai-catalog/agents/1011457/
 - Live MR bot comment (real): https://gitlab.com/uthmannabeel-group/Shockwave-project/-/merge_requests/1
 - Demo video: _<paste YouTube/Vimeo link>_

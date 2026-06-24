@@ -6,13 +6,14 @@
 
 Impact intelligence for code review, built on the **[GitLab Orbit](https://about.gitlab.com/gitlab-orbit/)** knowledge graph.
 
+[![Live demo](https://img.shields.io/badge/demo-live-3FB950.svg)](https://shockwave-ochw.vercel.app/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-3776AB.svg)](pyproject.toml)
 [![Tests](https://img.shields.io/badge/tests-23%20passing-3FB950.svg)](tests/)
 [![Built on GitLab Orbit](https://img.shields.io/badge/built%20on-GitLab%20Orbit-FC6D26.svg)](https://about.gitlab.com/gitlab-orbit/)
 [![GitLab Transcend](https://img.shields.io/badge/GitLab-Transcend%20Hackathon-FC6D26.svg)](https://gitlab-transcend.devpost.com/)
 
-**[Live Blast Monitor](#-the-blast-monitor) · [AI Catalog agent](https://gitlab.com/explore/ai-catalog/agents/1011457/) · [Live MR-bot comment](https://gitlab.com/uthmannabeel-group/Shockwave-project/-/merge_requests/1)**
+**🌐 [Live site & Blast Monitor](https://shockwave-ochw.vercel.app/) · [AI Catalog agent](https://gitlab.com/explore/ai-catalog/agents/1011457/) · [Live MR-bot comment](https://gitlab.com/uthmannabeel-group/Shockwave-project/-/merge_requests/1)**
 
 ![Shockwave Blast Monitor](docs/img/blast-monitor.png)
 
