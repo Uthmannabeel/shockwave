@@ -15,6 +15,8 @@ Open these browser tabs, in order:
 
 **Recording setup:** 1080p, browser zoom ~110%, hide the bookmarks bar. Tools: OBS / Loom / Xbox Game Bar (`Win+G`).
 
+**Rehearse once before recording:** on tab 2, type `setupmethod` → **Detonate** so you've seen the ~1-second ripple settle and the rail fill. Two things that are *expected* (don't be thrown on camera): a small **"📸 snapshot demo"** note on the map (the hosted site uses a real baked analysis), and the MR (tab 3) shows **"mergeable, no checks"** — clean, no red pipeline.
+
 ---
 
 ## The script
